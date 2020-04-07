@@ -1,7 +1,6 @@
 #include "I2C.h"
 
 int i2c_fd;
-
 void I2C_Init()
 {
     i2c_fd = open(I2C_BUS, O_RDWR);

@@ -8,5 +8,10 @@
 #include <string.h>
 #include <unistd.h>   
 #include <stdint.h>
+#include "main.h"
 
 #define I2C_BUS "/dev/i2c-2" 
+
+void I2C_Init();
+void I2C_write(uint8_t *buffer, int size);
+void I2C_close();
