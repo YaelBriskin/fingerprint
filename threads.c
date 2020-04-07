@@ -2,6 +2,8 @@
 
 extern int socket;
 extern Database DB;
+int uart_fd;
+
 //extern int fingerFlag;
 
 void* buttonThread(void* arg) 
@@ -10,11 +12,14 @@ void* buttonThread(void* arg)
     GPIO_init(GPIO_BUTTON_IN, "in");
     GPIO_init(GPIO_BUTTON_OUT, "in");
     GPIO_init(GPIO_LED, "out");
+    //Initialize UART
+    uart_fd=UART_Init();
 
     int button_fd_in=GPIO_open(GPIO_BUTTON_IN);
     int button_fd_out=GPIO_open(GPIO_BUTTON_OUT);
     while (1) 
     {
+        findFinger();
         int stateButton_in = readGPIO(button_fd_in);
         int stateButton_out = readGPIO(button_fd_out);
 
@@ -32,22 +37,6 @@ void* buttonThread(void* arg)
         }
         usleep(100000); // Pause for 100 milliseconds before the next check
     }
-    return NULL;
-}
-
-void* uartThread(void* arg) 
-{
-    int uart_fd=UART_Init();
-    while (1) 
-    {
-        UART_write(uart_fd, "f", 1);
-        char buffer[10]; 
-
-        // Ваш код обработки прочитанных данных здесь
-
-        usleep(100000); 
-    }
-
     return NULL;
 }
 

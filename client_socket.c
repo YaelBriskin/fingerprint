@@ -74,7 +74,8 @@ int sendData(int socket, const char* message)
         return 0;  
     }
 }
-void receiveData(int socket, char* buffer, size_t bufferSize) {
+void receiveData(int socket, char* buffer, size_t bufferSize)
+{
     int attempt = 0;
 
     while (attempt < MAX_RECEIVE_RETRIES) {
@@ -111,6 +112,15 @@ void receiveData(int socket, char* buffer, size_t bufferSize) {
         close(socket);
         exit(EXIT_FAILURE);
     }
+}
+
+void receiveDateTime(int socket, char* buffer, size_t bufferSize) 
+{
+    // Receive data
+    receiveData(socket, buffer, bufferSize);
+    // Process the received data (assuming it is a string representation of date and time)
+    printf("Received date and time from the server: %s\n", buffer);
+    return buffer;
 }
 
 void closeConnection(int socket)

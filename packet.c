@@ -1,7 +1,4 @@
 #include "packet.h"
-#include <stdlib.h>
-#include <ctype.h>
-
 /*
 protocol[][][]...
 	Header   |  Adder   |  Package     |  Package  |  Package content             |  Checksum
@@ -11,9 +8,10 @@ protocol[][][]...
 
 
  */
-
-
-uint32_t startTick;
+uint8_t pData[SIZE]={0};
+uint8_t RX_UART2[SIZE_RX2];
+uint8_t getTempCount[SIZE_RX2] = "getT\n";
+extern int uart_fd;
 
 //Gets the command packet
 #define GET_CMD_PACKET(...) \
@@ -195,21 +193,16 @@ uint8_t GetFromUart(fingerprintPacket *packet)
 	uint16_t length = 0;
 	int chkSum;
 	SendToUart(packet);
-	startTick=HAL_GetTick();
-	while(count_received_data < MIN_SIZE_PACKET)
+	if(UART_read(uart_fd, (uint16_t) pData,MIN_SIZE_PACKET)==0)
 	{
-		if(HAL_GetTick() - startTick>=TIMEOUT)
-			return FINGERPRINT_BADPACKET;
+		return FINGERPRINT_TIMEOUT;
 	}
 	length = (uint16_t) pData[7] << 8;
 	length = (uint16_t) pData[8];
-	startTick=HAL_GetTick();
-	while(count_received_data < ( MIN_SIZE_PACKET + length ))
+	if(UART_read(uart_fd, (uint16_t) pData,length)==0)
 	{
-		if(HAL_GetTick() - startTick>=TIMEOUT)
-			return FINGERPRINT_BADPACKET;
+		return FINGERPRINT_TIMEOUT;
 	}
-	count_received_data=0;
 	if (pData[idx] == (FINGERPRINT_STARTCODE >> 8))
 	{
 		packet->start_code = (uint16_t) pData[idx++] << 8;
@@ -271,10 +264,6 @@ void GetFromServer()
 			byte = (uint16_t) dec;
 			deleteModel(byte);
 		}
-		break;
-	case 'f':
-		//find the fingerprint in Flash library
-		findFinger();
 		break;
 	default:
 		;
