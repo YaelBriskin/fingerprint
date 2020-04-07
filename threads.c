@@ -2,6 +2,7 @@
 
 extern int socket;
 extern Database DB;
+//extern int fingerFlag;
 
 void* buttonThread(void* arg) 
 {
@@ -19,13 +20,13 @@ void* buttonThread(void* arg)
 
         if (stateButton_in == 1) 
         {
-            // Perform actions when button 1 is pressed
+            // Perform actions when button IN is pressed
             printf("Button IN pressed! Turning on LED.\n");
             turnOnLED();
         }
         if (stateButton_out == 1) 
         {
-            // Perform actions when button 2 is pressed
+            // Perform actions when button OUT is pressed
             printf("Button OUT pressed! Turning on LED.\n");
             turnOnLED();
         }
@@ -37,10 +38,9 @@ void* buttonThread(void* arg)
 void* uartThread(void* arg) 
 {
     int uart_fd=UART_Init();
-    Uart_Config(uart_fd);
-
     while (1) 
     {
+        UART_write(uart_fd, "f", 1);
         char buffer[10]; 
 
         // Ваш код обработки прочитанных данных здесь
