@@ -1,16 +1,16 @@
 #include "UART.h"
 
-int uart_fd;
-void UART_Init()
+int UART_Init()
 {
-    uart_fd = open(UART_DEVICE, O_RDWR | O_NOCTTY | O_NDELAY);
+    int uart_fd = open(UART_DEVICE, O_RDWR | O_NOCTTY | O_NDELAY);
     if (uart_fd == -1) 
     {
         perror("Error opening UART");
         exit(EXIT_FAILURE);
-    }   
+    }  
+    return  uart_fd;
 }
-int Uart_Config()
+void Uart_Config(int uart_fd)
 {
   struct termios options;
   /* Serial Configuration */
@@ -32,20 +32,35 @@ int Uart_Config()
   tcflush(uart_fd,TCIOFLUSH);
 }
 
-void UART_transmit(const char* data, int size) 
+void UART_write(int uart_fd,const char* data, int size) 
 {
-    int retries_UART_transmit = 0;
+    int retries_UART_write = 0;
     do {
         if (write(uart_fd, data, size) == size)
             break;
-        perror("Failed to write to I2C bus");
-        retries_UART_transmit++;
-    } while (retries_UART_transmit < MAX_RETRIES);
+        perror("Failed to write to UART");
+        retries_UART_write++;
+    } while (retries_UART_write < MAX_RETRIES);
 
-    if (retries_UART_transmit == MAX_RETRIES) 
+    if (retries_UART_write == MAX_RETRIES) 
         fprintf(stderr, "Error: Maximum retries reached\n");
 }
-void UART_close()
+int UART_read(int uart_fd,char* buffer, int size) 
+{
+    int retries_UART_read = 0;
+    do {
+        if(read(uart_fd, buffer, size)== size)
+            return 1;
+        perror("Error reading from UART");
+        retries_UART_read++;
+    } while (retries_UART_read < MAX_RETRIES);
+
+    if (retries_UART_read == MAX_RETRIES)
+        fprintf(stderr, "Error: Maximum retries reached\n");
+    return 0;
+}
+
+void UART_close(int uart_fd)
 {
     close(uart_fd);
 }

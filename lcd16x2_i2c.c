@@ -2,14 +2,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#define RETRY_DELAY 10
+#include <unistd.h>
 
+#define RETRY_DELAY 10
 /////////////////////////////////////////////////////
 // in this code, all HAL_Delay are registered by the LCD protocol
 
-static I2C_HandleTypeDef* lcd16x2_i2cHandle;
-static uint8_t LCD_I2C_SLAVE_ADDRESS=0;
-HAL_StatusTypeDef status;
 /* Private functions */
 void lcd16x2_i2c_sendCommand(uint8_t command)
 {
@@ -22,7 +20,7 @@ void lcd16x2_i2c_sendCommand(uint8_t command)
       command_0_3 | LCD_EN | LCD_BK_LIGHT,
       command_0_3 | LCD_BK_LIGHT,
   };
-  I2C_transmit_with_check(lcd16x2_i2cHandle, LCD_I2C_SLAVE_ADDRESS, i2cData, 4);
+  I2C_write(i2cData, 4);
 }
 
 void lcd16x2_i2c_sendData(uint8_t data)
@@ -36,7 +34,7 @@ void lcd16x2_i2c_sendData(uint8_t data)
       data_0_3 | LCD_EN | LCD_BK_LIGHT | LCD_RS,
       data_0_3 | LCD_BK_LIGHT | LCD_RS,
   };
-  I2C_transmit_with_check(lcd16x2_i2cHandle, LCD_I2C_SLAVE_ADDRESS, i2cData, 4);
+  I2C_write(i2cData, 4);
 }
 
 
@@ -44,44 +42,33 @@ void lcd16x2_i2c_sendData(uint8_t data)
  * @brief Initialise LCD16x2
  * @param[in] *pI2cHandle - pointer to HAL I2C handle
  */
-bool lcd16x2_i2c_init(I2C_HandleTypeDef *pI2cHandle)
+bool lcd16x2_i2c_init()
 {
-  HAL_Delay(50);
-  lcd16x2_i2cHandle = pI2cHandle;
-  if(HAL_I2C_IsDeviceReady(lcd16x2_i2cHandle, LCD_I2C_SLAVE_ADDRESS_0, 5, 500) != HAL_OK)
-  {
-    if(HAL_I2C_IsDeviceReady(lcd16x2_i2cHandle, LCD_I2C_SLAVE_ADDRESS_1, 5, 500) != HAL_OK)
-    {
-    	return false;
-    }
-    else
-      LCD_I2C_SLAVE_ADDRESS = LCD_I2C_SLAVE_ADDRESS_1;
-  }
-  else
-    LCD_I2C_SLAVE_ADDRESS = LCD_I2C_SLAVE_ADDRESS_0;
+  usleep (50);
+  I2C_Init();
   //Initialise LCD for 4-bit operation
   //1. Wait at least 15ms
-  HAL_Delay(45);
+  usleep (45);
   //2. Attentions sequence
   lcd16x2_i2c_sendCommand(0x30);
-  HAL_Delay(5);
+  usleep (5);
   lcd16x2_i2c_sendCommand(0x30);
-  HAL_Delay(1);
+  usleep (1);
   lcd16x2_i2c_sendCommand(0x30);
-  HAL_Delay(8);
+  usleep (8);
   lcd16x2_i2c_sendCommand(0x20);
-  HAL_Delay(8);
+  usleep (8);
 
   lcd16x2_i2c_sendCommand(LCD_FUNCTIONSET | LCD_FUNCTION_N);
-  HAL_Delay(1);
+  usleep (1);
   lcd16x2_i2c_sendCommand(LCD_DISPLAYCONTROL);
-  HAL_Delay(1);
+  usleep (1);
   lcd16x2_i2c_sendCommand(LCD_CLEARDISPLAY);
-  HAL_Delay(3);
+  usleep (3);
   lcd16x2_i2c_sendCommand(0x04 | LCD_ENTRY_ID);
-  HAL_Delay(1);
+  usleep (1);
   lcd16x2_i2c_sendCommand(LCD_DISPLAYCONTROL | LCD_DISPLAY_D);
-  HAL_Delay(3);
+  usleep (3);
 
   return true;
 }
@@ -141,7 +128,7 @@ void lcd16x2_i2c_4thLine(void)
 void lcd16x2_i2c_clear(void)
 {
   lcd16x2_i2c_sendCommand(LCD_CLEARDISPLAY);
-  HAL_Delay(3);
+  usleep (3);
 }
 //Display ON/OFF, to hide all characters, but not clear
 void lcd16x2_i2c_display(bool state)

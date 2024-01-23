@@ -13,6 +13,7 @@
 #define UART_BaudRate B9600
 
 void UART_Init();
-int Uart_Config();
-void UART_transmit(const char* data, int size);
-void UART_close();
+void Uart_Config(int uart_fd);
+void UART_write(int uart_fd,const char* data, int size);
+int UART_read(int uart_fd,char* buffer, int size);
+void UART_close(int uart_fd);
