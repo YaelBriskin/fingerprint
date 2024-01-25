@@ -9,5 +9,6 @@
 #include "I2C.h"
 #include "client_socket.h"
 #include "DataBase.h"
+#include <time.h>
 
 #define MAX_RETRIES 10

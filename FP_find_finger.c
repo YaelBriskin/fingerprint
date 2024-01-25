@@ -4,7 +4,27 @@
 char mydata[23] = { 0 };
 extern uint8_t fingerID[2];
 
-void findFinger()
+int stringToInt(const char* str) 
+{
+    int result = 0;
+    int i = 0;
+    // Convert each digit in the string to a number
+    while (str[i] != '\0') 
+    {
+        if (str[i] >= '0' && str[i] <= '9') 
+            result = result * 10 + (str[i] - '0');
+        else 
+        {
+            // Handle invalid characters
+            fprintf(stderr, "Invalid character in string: %c\n", str[i]);
+            return 0; 
+        }
+        i++;
+    }
+    return result;
+}
+//tries to scan your fingerprint for only 1 minute
+int findFinger(const char* message)
 {
 	char num[2] = { 0 };
 	int ack = -1;
@@ -13,7 +33,11 @@ void findFinger()
 	lcd16x2_i2c_printf("Waiting finger to");
 	lcd16x2_i2c_setCursor(1,0);
 	lcd16x2_i2c_printf("enroll");
-	while (ack != FINGERPRINT_OK)
+
+	clock_t start_time = clock();
+	const clock_t max_execution_time = 60 * CLOCKS_PER_SEC;
+
+	while (ack != FINGERPRINT_OK && (clock() - start_time) <= max_execution_time)
 	{
 		//detecting finger and store the detected finger image in ImageBuffer while returning successfull confirmation code; If there is no finger, returned confirmation code would be cant detect finger.
 		ack = (int) getImage();
@@ -81,7 +105,7 @@ void findFinger()
 		;
 	}
 		if (ack != FINGERPRINT_OK)
-			return;
+			return 0;
 		//
 		ack = fingerFastSearch();
 		switch (ack)
@@ -90,9 +114,9 @@ void findFinger()
 		case FINGERPRINT_OK:
 			sprintf(num, "%d", (fingerID[1] | (fingerID[0] << 8)));
 			lcd16x2_i2c_clear();
-			sprintf(mydata,"Found ID #%s",num);
+			sprintf(mydata,"%s ID #%s", message,num);
 			lcd16x2_i2c_printf(mydata);
-			break;
+			return stringToInt(num);
 		case FINGERPRINT_PACKETRECIEVER:
 			lcd16x2_i2c_clear();
 			lcd16x2_i2c_printf("Error when receiving package");
@@ -104,4 +128,7 @@ void findFinger()
 		default:
 			;
 		}
+		if (ack != FINGERPRINT_OK)
+			return 0;
+			
 }

@@ -1,8 +1,9 @@
 #include "client_socket.h"
 
-int connectToServer() 
+int client_socket;
+
+void connectToServer() 
 {
-    int client_socket;
     struct sockaddr_in server_addr;
     int attempt = 0;
 
@@ -47,17 +48,15 @@ int connectToServer()
         fprintf(stderr, "Failed to connect after %d attempts\n", MAX_RETRIES);
         exit(EXIT_FAILURE);
     }
-
-    return client_socket;
 }
-int sendData(int socket, const char* message)
+int sendData(const char* message)
 {
     int attempt = 0;
     ssize_t bytesSent;
     while (attempt < MAX_RETRIES) 
     {
         // Send data
-        bytesSent = send(socket, message, strlen(message), 0);
+        bytesSent = send(client_socket, message, strlen(message), 0);
         if (bytesSent == -1) 
         {
             perror("Error sending data");
@@ -74,13 +73,13 @@ int sendData(int socket, const char* message)
         return 0;  
     }
 }
-void receiveData(int socket, char* buffer, size_t bufferSize)
+void receiveData(char* buffer, size_t bufferSize)
 {
     int attempt = 0;
 
     while (attempt < MAX_RECEIVE_RETRIES) {
         // Получение данных
-        ssize_t bytesRead = recv(socket, buffer, bufferSize - 1, 0);
+        ssize_t bytesRead = recv(client_socket, buffer, bufferSize - 1, 0);
 
         if (bytesRead > 0) 
         {
@@ -93,7 +92,8 @@ void receiveData(int socket, char* buffer, size_t bufferSize)
         {
             // Server closed connection
             printf("Server closed the connection\n");
-            close(socket);
+            closeConnection();           
+            connectToServer();
             exit(EXIT_FAILURE);
         } 
         else 
@@ -109,23 +109,24 @@ void receiveData(int socket, char* buffer, size_t bufferSize)
     if (attempt == MAX_RECEIVE_RETRIES) 
     {
         fprintf(stderr, "Failed to receive data after %d attempts\n", MAX_RECEIVE_RETRIES);
-        close(socket);
+        closeConnection();          
+        connectToServer();
         exit(EXIT_FAILURE);
     }
 }
 
-void receiveDateTime(int socket, char* buffer, size_t bufferSize) 
+void receiveDateTime(char* buffer, size_t bufferSize) 
 {
     // Receive data
-    receiveData(socket, buffer, bufferSize);
+    receiveData(client_socket, buffer, bufferSize);
     // Process the received data (assuming it is a string representation of date and time)
     printf("Received date and time from the server: %s\n", buffer);
     return buffer;
 }
 
-void closeConnection(int socket)
+void closeConnection()
 {
     // Close the connection
-    close(socket);
+    close(client_socket);
     printf("Socket connection closed\n");
 }

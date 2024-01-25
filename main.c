@@ -1,7 +1,6 @@
 #include "main.h"
 
 int socket;
-DataBase DB;
 
 void displayCurrentTime() 
 {
@@ -15,10 +14,10 @@ void displayCurrentTime()
     fgets(timeString, sizeof(timeString), dateCommand);
     pclose(dateCommand);
 
-    lcd16x2_i2c_printf(0, 0, "Время: %s", timeString);
+    lcd16x2_i2c_printf("%s", timeString);
 }
 
-int main() 
+int main()
 {
     configureNetwork();
     restartNetworking();
@@ -31,7 +30,7 @@ int main()
     //create socket
     socket =connectToServer();
     //create or open database
-    DB= DB_open();
+    DB_open();
 
     char receivedDateTime[30];
     memset(receivedDateTime, 0, sizeof(receivedDateTime));
@@ -39,9 +38,9 @@ int main()
     receiveDateTime(client_socket, receivedDateTime, sizeof(receivedDateTime));
     setSystemTime(receivedDateTime);
 
-    // Create a thread for checking the button state
-    pthread_t thread_button,thread_uart,thread_socket,thread_database;
-    if (pthread_create(&thread_button, NULL, buttonThread, NULL) != 0) 
+    // Create a threads
+    pthread_t thread_fingerPrint,thread_database;
+    if (pthread_create(&thread_fingerPrint, NULL, fingerPrintThread, NULL) != 0) 
     {
         perror("Error creating button thread");
         exit(EXIT_FAILURE);
@@ -51,10 +50,4 @@ int main()
         perror("Error creating database thread");
         exit(EXIT_FAILURE);
     }
-        if (pthread_create(&thread_uart, NULL, uartThread, NULL) != 0) 
-    {
-        perror("Error creating uart thread");
-        exit(EXIT_FAILURE);
-    }
-
 }
