@@ -3,29 +3,31 @@
 int socket;
 DataBase DB;
 
-void setSystemTime(const char* dateTime) 
+void displayCurrentTime() 
 {
-    char command[50];
-    snprintf(command, sizeof(command), "sudo date -s '%s'", dateTime);
-
-    // Execute the command
-    int result = system(command);
-
-    if (result != 0) {
-        fprintf(stderr, "Error setting system time\n");
-        // Handle the error as needed
-    } else {
-        printf("System time updated successfully\n");
+    // Выполнение команды "date" и считывание вывода
+    FILE* dateCommand = popen("date", "r");
+    if (dateCommand == NULL) {
+        perror("date command error");
+        exit(EXIT_FAILURE);
     }
+    char timeString[50];
+    fgets(timeString, sizeof(timeString), dateCommand);
+    pclose(dateCommand);
+
+    lcd16x2_i2c_printf(0, 0, "Время: %s", timeString);
 }
 
 int main() 
 {
+    configureNetwork();
+    restartNetworking();
     // Initialize I2C Display
     lcd16x2_i2c_init();
     lcd16x2_i2c_clear();
 	lcd16x2_i2c_setCursor(0, 0);
 	lcd16x2_i2c_printf("Welcome");
+    displayCurrentTime();
     //create socket
     socket =connectToServer();
     //create or open database
