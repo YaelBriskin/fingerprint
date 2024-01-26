@@ -1,8 +1,4 @@
-#include "lcd16x2_i2c.h"
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
-#include <unistd.h>
+#include "../Inc/lcd16x2_i2c.h"
 
 #define RETRY_DELAY 10
 /////////////////////////////////////////////////////
@@ -44,8 +40,9 @@ void lcd16x2_i2c_sendData(uint8_t data)
  */
 bool lcd16x2_i2c_init()
 {
+  printf("lcd16x2_i2c_init()\r\n");
   usleep (50);
-  I2C_Init();
+  if(I2C_Init()!=1) return false;
   //Initialise LCD for 4-bit operation
   //1. Wait at least 15ms
   usleep (45);

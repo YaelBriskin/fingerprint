@@ -1,4 +1,4 @@
-#include "/Inc/FP_find_finger.h"
+#include "../Inc/FP_find_finger.h"
 
 
 char mydata[23] = { 0 };

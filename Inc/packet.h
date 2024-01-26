@@ -1,4 +1,14 @@
+#ifndef PACKET_H
+#define PACKET_H
+
 #include <stdint.h>
+#include <string.h>
+#include <ctype.h>
+#include "UART.h"
+#include "FP_delete.h"
+#include "FP_enrolling.h"
+
+#define MAX_RETRIES 10
 
 // confirmation codes
 #define FINGERPRINT_OK 0x00                 // выполнение команды завершено успешно
@@ -74,7 +84,6 @@ uint16_t templateCount;
 
 ///! Вспомогательный класс для создания пакетов UART
 typedef struct
-    Packet
 {
    uint16_t start_code; ///< "Wakeup" code for packet detection
    uint8_t address[4];  ///< 32-bit Fingerprint sensor address
@@ -85,7 +94,7 @@ typedef struct
 } fingerprintPacket;
 
 // ReadSysPara
-typedef struct Params
+typedef struct
 {
    uint16_t status_reg;     // регистр состояния
    uint16_t system_id;      // код id системы
@@ -141,6 +150,7 @@ uint8_t fingerFastSearch(void);
 uint8_t getTemplateCount(void);
 uint8_t getParameters(void);
 void SendToUart(fingerprintPacket *packet);
-uint8_t GetFromUart(fingerprintPacket *Packet);
+uint8_t GetFromUart(fingerprintPacket *packet);
 uint8_t communicate_link(void);
 void GetFromServer(char *request);
+#endif // PACKET_H

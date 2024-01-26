@@ -8,10 +8,15 @@
 #include <string.h>
 #include <unistd.h>   
 #include <stdint.h>
-#include "main.h"
+#include <sys/ioctl.h>
+
 
 #define I2C_BUS "/dev/i2c-2" 
+#define I2C_ADDRESS 0x27 
+#define I2C_SLAVE 0x0703
 
-void I2C_Init();
+#define MAX_RETRIES 10
+
+int I2C_Init();
 void I2C_write(uint8_t *buffer, int size);
 void I2C_close();

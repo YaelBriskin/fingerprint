@@ -3,6 +3,12 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include "I2C.h"
+
 
 bool lcd16x2_i2c_init();
 void lcd16x2_i2c_setCursor(uint8_t row, uint8_t col);

@@ -1,4 +1,4 @@
-#include "client_socket.h"
+#include "../Inc/client_socket.h"
 
 int client_socket;
 
@@ -108,7 +108,7 @@ void socket_read(char* buffer, size_t bufferSize)
     }
     if (attempt == MAX_RETRIES) 
     {
-        fprintf(stderr, "Failed to receive data after %d attempts\n", MAX_RECEIVE_RETRIES);
+        fprintf(stderr, "Failed to receive data after %d attempts\n", MAX_RETRIES);
         closeConnection();          
         connectToServer();
     }
@@ -118,31 +118,4 @@ void closeConnection()
     // Close the connection
     close(client_socket);
     printf("Socket connection closed\n");
-}
-void GetFromServer(char * request)
-{
-	char command = request[0];
-	uint16_t byte = 0;
-	switch(command)
-    {
-	case 'e' :
-		//to enroll a fingerprint and save ID in Flash memory
-		if(isdigit(request[1]))
-		{
-			byte = (uint16_t)atoi(&request[1]);
-			enrolling(byte);
-		}
-		break;
-	case 'd':
-		//delete a specific template in the Flash library
-		if(isdigit(request[1]))
-		{
-			byte = (uint16_t)atoi(&request[1]);
-			deleteModel(byte);
-		}
-		break;
-	default:
-		;
-	}
-	memset(request, 0, SIZE_Eth);
 }

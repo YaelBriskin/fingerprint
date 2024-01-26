@@ -1,4 +1,4 @@
-#include "/Inc/packet.h"
+#include "../Inc/packet.h"
 /*
 protocol[][][]...
 	Header   |  Adder   |  Package     |  Package  |  Package content             |  Checksum
@@ -9,8 +9,8 @@ protocol[][][]...
 
  */
 uint8_t pData[SIZE]={0};
-uint8_t RX_UART2[SIZE_RX2];
-uint8_t getTempCount[SIZE_RX2] = "getT\n";
+uint8_t RX_UART2[SIZE_Eth];
+uint8_t getTempCount[SIZE_Eth] = "getT\n";
 extern int uart_fd;
 
 //Gets the command packet

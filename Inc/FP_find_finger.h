@@ -1,8 +1,14 @@
+#ifndef FP_FIND_FINGER_H
+#define FP_FIND_FINGER_H
+
 #include <stdio.h>
-#include <ctime>
-#include "/Inc/UART.h"
-#include "/Inc/lcd16x2_i2c.h"
-#include "/Inc/packet.h"
+#include <time.h>
+#include "UART.h"
+#include "lcd16x2_i2c.h"
+#include "packet.h"
 
 
 int findFinger(const char* message);
+int stringToInt(const char* str);
+
+#endif  // FP_FIND_FINGER_H

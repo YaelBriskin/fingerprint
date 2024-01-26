@@ -1,4 +1,4 @@
-#include "GPIO.h"
+#include "../Inc/GPIO.h"
 
 void GPIO_init(int pinNumber, const char* direction) 
 {

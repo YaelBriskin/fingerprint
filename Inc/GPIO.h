@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
 
 #define GPIO_BUTTON_IN 66  
 #define GPIO_BUTTON_OUT 67 

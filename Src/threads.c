@@ -1,14 +1,4 @@
-#include <time.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <pthread.h>
-
-#define MAX_RETRIES 10
-
-int uart_fd;
+#include "../Inc/threads.h"
 
 void getCurrentTimeAndDate(char*  dateString , char* timeString) 
 {
@@ -25,22 +15,22 @@ void getCurrentTimeAndDate(char*  dateString , char* timeString)
 
 void* fingerPrintThread(void* arg) 
 {
-    char date[20]=0;
-    char time[20]=0;
+    char date[20]={0};
+    char time[20]={0};
     // Initialize GPIO for the button and LED
     GPIO_init(GPIO_BUTTON_IN, "in");
     GPIO_init(GPIO_BUTTON_OUT, "in");
     GPIO_init(GPIO_LED, "out");
     //Initialize UART
-    uart_fd=UART_Init();
+    UART_Init();
 
     int button_fd_in=GPIO_open(GPIO_BUTTON_IN);
     int button_fd_out=GPIO_open(GPIO_BUTTON_OUT);
     while (1) 
     {
-        if (readGPIO(button_fd_in)) //press button IN
+        if (GPIO_read(button_fd_in)) //press button IN
         {
-            int id= findFinger("hello");
+            int id= findFinger("Hello");
             if(id)
             {
                 getCurrentTimeAndDate(date, time);
@@ -50,9 +40,9 @@ void* fingerPrintThread(void* arg)
             printf("Button IN pressed! Turning on LED.\n");
             turnOnLED();
         }
-        if (readGPIO(button_fd_out)) //press button OUT
+        if (GPIO_read(button_fd_out)) //press button OUT
         {
-            int id= findFinger("goodbye");
+            int id= findFinger("Goodbye");
             if(id)
             {
                 getCurrentTimeAndDate(date, time);

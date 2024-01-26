@@ -1,4 +1,8 @@
-#include "DataBase.h"
+#include "../Inc/DataBase.h"
+
+typedef struct {
+    sqlite3* db;
+} Database;
 
 Database database;
 // Global mutex for synchronizing database access
@@ -23,7 +27,7 @@ void DB_open()
             "Direction TEXT,"
             "Saved TEXT DEFAULT 'X');";
 
-    rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
+    rc = sqlite3_exec(database.db, sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK)
     {
         fprintf(stderr, "Failed to create table: %s\n", err_msg);
@@ -47,9 +51,9 @@ void DB_write(int ID, const char *date, const char *time, const char *direction)
         // SQL query to insert data into the table
         const char *sql = "INSERT INTO employee_attendance (ID, Date, Time, Direction) VALUES (?, ?, ?, ?);";
         // Prepare the request
-        if (sqlite3_prepare_v2(database->db, sql, -1, &stmt, NULL) != SQLITE_OK)
+        if (sqlite3_prepare_v2(database.db, sql, -1, &stmt, NULL) != SQLITE_OK)
         {
-            fprintf(stderr, "Failed to prepare request: %s\n", sqlite3_errmsg(database->db));
+            fprintf(stderr, "Failed to prepare request: %s\n", sqlite3_errmsg(database.db));
             exit(1);
         }
         // Binding values to request parameters
@@ -60,7 +64,7 @@ void DB_write(int ID, const char *date, const char *time, const char *direction)
         // Execute the request
         if (sqlite3_step(stmt) != SQLITE_DONE)
         {
-            fprintf(stderr, "The request failed: %s\n", sqlite3_errmsg(database->db));
+            fprintf(stderr, "The request failed: %s\n", sqlite3_errmsg(database.db));
             exit(1);
         }
         // Finish the request
@@ -76,7 +80,7 @@ void DB_close()
     if (pthread_mutex_lock(&databaseMutex) == 0)
     {
         // Close the connection to the database
-        sqlite3_close(database->db);
+        sqlite3_close(database.db);
         // Release the mutex after performing operations
         pthread_mutex_unlock(&databaseMutex);
     }
@@ -90,9 +94,9 @@ void DB_find()
         char *query = "SELECT * FROM employee_attendance WHERE Saved = 'X';";
         sqlite3_stmt *stmt;
 
-        if (sqlite3_prepare_v2(database->db, query, -1, &stmt, NULL) != SQLITE_OK)
+        if (sqlite3_prepare_v2(database.db, query, -1, &stmt, NULL) != SQLITE_OK)
         {
-            fprintf(stderr, "Failed to prepare request: %s\n", sqlite3_errmsg(database->db));
+            fprintf(stderr, "Failed to prepare request: %s\n", sqlite3_errmsg(database.db));
             return;
         }
         // Processing query results
@@ -110,7 +114,7 @@ void DB_find()
                      time ? time : "",            // Time
                      direction ? direction : ""); // Direction
 
-            if (sendData(data))
+            if (socket_write(data))
             {
                 printf("Data sent to the server: %s\n", data);
                 DB_update(id);
@@ -127,7 +131,7 @@ void DB_update(int id)
     char updateQuery[256];
     snprintf(updateQuery, sizeof(updateQuery), "UPDATE employee_attendance SET Saved = 'V' WHERE ID = %d;", id);
     char *err_msg = 0;
-    int rc = sqlite3_exec(database->db, updateQuery, 0, 0, &err_msg);
+    int rc = sqlite3_exec(database.db, updateQuery, 0, 0, &err_msg);
 
     if (rc != SQLITE_OK)
     {
