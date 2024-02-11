@@ -4,7 +4,7 @@
 #include "packet.h"
 #include <stdio.h>
 #include "UART.h"
-#include "lcd16x2_i2c.h"
+#include "lcd20x4_i2c.h"
 #include <time.h>
 
 void enrolling(uint16_t pageId);

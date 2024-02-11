@@ -9,11 +9,11 @@
 #include <unistd.h>   
 #include <stdint.h>
 #include <sys/ioctl.h>
+#include <linux/i2c-dev.h>
 
 
 #define I2C_BUS "/dev/i2c-2" 
 #define I2C_ADDRESS 0x27 
-#define I2C_SLAVE 0x0703
 
 #define MAX_RETRIES 10
 

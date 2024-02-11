@@ -1,6 +1,6 @@
 #include "../Inc/GPIO.h"
 
-void GPIO_init(int pinNumber, const char* direction) 
+int GPIO_init(int pinNumber, const char* direction) 
 {
     char buffer[50];
     snprintf(buffer, sizeof(buffer), "/sys/class/gpio/gpio%d", pinNumber);
@@ -18,12 +18,13 @@ void GPIO_init(int pinNumber, const char* direction)
     if (gpio_fd == -1) 
     {
         perror("Error opening GPIO direction");
-        exit(EXIT_FAILURE);
+        return 0;
     }
 
     // Set the GPIO direction
     write(gpio_fd, direction, strlen(direction));
     close(gpio_fd);
+    return 1;
 }
 
 int GPIO_read(int gpio_fd)

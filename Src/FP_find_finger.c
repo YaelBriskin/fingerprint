@@ -28,11 +28,8 @@ int findFinger(const char* message)
 {
 	char num[2] = { 0 };
 	int ack = -1;
-	lcd16x2_i2c_clear();
-	lcd16x2_i2c_setCursor(0, 0);
-	lcd16x2_i2c_printf("Waiting finger to");
-	lcd16x2_i2c_setCursor(1,0);
-	lcd16x2_i2c_printf("enroll");
+	lcd20x4_i2c_puts(1, 0,"Waiting finger to enroll");
+
 
 	clock_t start_time = clock();
 	const clock_t max_execution_time = 60 * CLOCKS_PER_SEC;
@@ -45,29 +42,16 @@ int findFinger(const char* message)
 		{
 			//checks how the procedure went. FINGERPRINT_OK means good
 		case FINGERPRINT_OK:
-			lcd16x2_i2c_clear();
-			lcd16x2_i2c_setCursor(0, 0);
-			lcd16x2_i2c_printf("Finger collection");
-			lcd16x2_i2c_setCursor(1,0);
-			lcd16x2_i2c_printf("success");
+			lcd20x4_i2c_puts(1, 0,"Finger collection success");
 			break;
 		case FINGERPRINT_PACKETRECIEVER:
-			lcd16x2_i2c_clear();
-			lcd16x2_i2c_setCursor(0, 0);
-			lcd16x2_i2c_printf("Error when receiving");
-			lcd16x2_i2c_setCursor(1,0);
-			lcd16x2_i2c_printf("package");
+			lcd20x4_i2c_puts(1, 0,"Error when receiving package");
 			break;
 		case FINGERPRINT_NOFINGER:
-			lcd16x2_i2c_clear();
-			lcd16x2_i2c_printf("Cant detect finger");
+			lcd20x4_i2c_puts(1, 0,"Cant detect finger");
 			break;
-		case FINGERPRINT_IMAGEFAIL://
-			lcd16x2_i2c_clear();
-			lcd16x2_i2c_setCursor(0, 4);
-			lcd16x2_i2c_printf("Fail to collect");
-			lcd16x2_i2c_setCursor(1,0);
-			lcd16x2_i2c_printf("finger");
+		case FINGERPRINT_IMAGEFAIL:
+			lcd20x4_i2c_puts(1, 0,"Fail to collect finger");
 			break;
 		default:
 			;
@@ -79,27 +63,19 @@ int findFinger(const char* message)
 	{
 	//checks how the procedure went. FINGERPRINT_OK means good
 	case FINGERPRINT_OK:
-		lcd16x2_i2c_clear();
-		lcd16x2_i2c_setCursor(0, 0);
-		lcd16x2_i2c_printf("Generate character");
-		lcd16x2_i2c_setCursor(1, 0);
-		lcd16x2_i2c_printf("file complete");
+		lcd20x4_i2c_puts(1, 0,"Generate character file complete");
 		break;
 	case FINGERPRINT_PACKETRECIEVER:
-		lcd16x2_i2c_clear();
-		lcd16x2_i2c_printf("Error when receiving package");
+		lcd20x4_i2c_puts(1, 0,"Error when receiving package");
 		break;
 	case FINGERPRINT_IMAGEMESS:
-		lcd16x2_i2c_clear();
-		lcd16x2_i2c_printf("Fail to generate character file due to the over-disorderly fingerprint image");
+		lcd20x4_i2c_puts(1, 0,"Fail to generate character file due to the over-disorderly fingerprint image");
 		break;
 	case FINGERPRINT_FEATUREFAIL:
-		lcd16x2_i2c_clear();
-		lcd16x2_i2c_printf("Fail to generate character file due to lackness of character point or over-smallness of fingerprint image");
+		lcd20x4_i2c_puts(1, 0,"Fail to generate character file due to lackness of character point or over-smallness of fingerprint image");
 		break;
 	case FINGERPRINT_INVALIDIMAGE:
-		lcd16x2_i2c_clear();
-		lcd16x2_i2c_printf("Fail to generate the image for the lackness of valid primary image");
+		lcd20x4_i2c_puts(1, 0,"Fail to generate the image for the lackness of valid primary image");
 		break;
 	default:
 		;
@@ -113,17 +89,15 @@ int findFinger(const char* message)
 		//checks how the procedure went. FINGERPRINT_OK means good
 		case FINGERPRINT_OK:
 			sprintf(num, "%d", (fingerID[1] | (fingerID[0] << 8)));
-			lcd16x2_i2c_clear();
 			sprintf(mydata,"%s ID #%s", message,num);
-			lcd16x2_i2c_printf(mydata);
+			lcd20x4_i2c_2ndLine();
+			lcd20x4_i2c_printf(mydata);
 			return stringToInt(num);
 		case FINGERPRINT_PACKETRECIEVER:
-			lcd16x2_i2c_clear();
-			lcd16x2_i2c_printf("Error when receiving package");
+			lcd20x4_i2c_puts(1, 0,"Error when receiving package");
 			break;
 		case FINGERPRINT_NOTFOUND:
-			lcd16x2_i2c_clear();
-			lcd16x2_i2c_printf("No matching in the library");
+			lcd20x4_i2c_puts(1, 0,"No matching in the library");
 			break;
 		default:
 			;

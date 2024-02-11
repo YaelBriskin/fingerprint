@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "UART.h"
-#include "lcd16x2_i2c.h"
+#include "lcd20x4_i2c.h"
 #include "packet.h"
 
 
