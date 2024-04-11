@@ -4,9 +4,9 @@
 #include <stdint.h>
 #include <string.h>
 #include <ctype.h>
-#include "UART.h"
-#include "FP_delete.h"
-#include "FP_enrolling.h"
+#include "../Inc/UART.h"
+#include "../Inc/FP_delete.h"
+#include "../Inc/FP_enrolling.h"
 
 #define MAX_RETRIES 10
 

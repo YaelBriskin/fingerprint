@@ -1,35 +1,42 @@
 
 #include "../Inc/FP_enrolling.h"
 
-void enrolling(uint16_t pageId)
+int enrolling(uint16_t pageId)
 {
 
     int ack = -1;
-    printf("Waiting finger to enroll\r\n ");
-    // ack=(int)getParameters();
+    showMessageOnDisplay("Waiting finger to enroll",-1);
+    sleep(1);
 
-    while (ack != FINGERPRINT_OK)
-    {
-        // ack=(int)communicate_link();
+    clock_t start_time;
+	const clock_t max_execution_time = 30 * CLOCKS_PER_SEC;
+
+    start_time = clock();
+	while (ack != FINGERPRINT_OK && (clock() - start_time) <= max_execution_time)
+	{
         ack = (int)getImage();
         switch (ack)
         {
         case FINGERPRINT_OK:
-            printf("Finger collection success\r\n ");
+            showMessageOnDisplay("Finger collection success",1,0);
             break;
         case FINGERPRINT_PACKETRECIEVER:
-            printf("Error when receiving package\r\n ");
+            showMessageOnDisplay("Error when receiving package",1,0);
             break;
         case FINGERPRINT_NOFINGER:
-            printf("Cant detect finger\r\n ");
+            showMessageOnDisplay("Can't detect finger",1,0);
             break;
         case FINGERPRINT_IMAGEFAIL:
-            printf("Fail to collect finger\r\n ");
+            showMessageOnDisplay("Fail to collect finger",1,0);
             break;
         default:;
         }
     }
-
+    if ((clock() - start_time) > max_execution_time) 
+    {
+        showMessageOnDisplay("Timeout: One minute has passed.",1,0);
+        return FINGERPRINT_TIMEOUT;
+    }
     ack = image2Tz(1);
 
     switch (ack)
@@ -51,12 +58,15 @@ void enrolling(uint16_t pageId)
         break;
     }
     printf("Clear sensor\r\n ");
+    sleep(2);
 
     while (getImage() != FINGERPRINT_NOFINGER)
         ;
     ack = FINGERPRINT_NOFINGER;
     printf("Waiting finger to enroll\r\n ");
-    while (ack != FINGERPRINT_OK)
+    
+    start_time = clock();
+	while (ack != FINGERPRINT_OK && (clock() - start_time) <= max_execution_time)
     {
         ack = getImage();
         switch (ack)
@@ -68,7 +78,7 @@ void enrolling(uint16_t pageId)
             printf("Error when receiving package\r\n ");
             break;
         case FINGERPRINT_NOFINGER:
-            printf("Can’t detect finger\r\n ");
+            printf("Can't detect finger\r\n ");
             break;
         case FINGERPRINT_IMAGEFAIL:
             printf("Fail to collect finger\r\n ");
@@ -76,7 +86,11 @@ void enrolling(uint16_t pageId)
         default:;
         }
     }
-
+    if ((clock() - start_time) > max_execution_time) 
+    {
+        printf("Timeout: One minute has passed.\r\n");
+        return FINGERPRINT_TIMEOUT;
+    }
     ack = image2Tz(2);
 
     switch (ack)
@@ -100,11 +114,9 @@ void enrolling(uint16_t pageId)
 
     ack = createModel();
     if (ack == FINGERPRINT_OK)
-    {
-    }
+        return 1;
     else if (ack == FINGERPRINT_PACKETRECIEVER)
-    {
-    }
+        return 0;
     else if (ack == FINGERPRINT_ENROLLMISMATCH)
     {
         ack = createModel();
@@ -115,10 +127,10 @@ void enrolling(uint16_t pageId)
             break;
         case FINGERPRINT_PACKETRECIEVER:
             printf("Error when receiving package\r\n ");
-            break;
+            return 0;
         case FINGERPRINT_ENROLLMISMATCH:
             printf("Fail to combine the character files. That’s, the character files don’t belong to one finger\r\n ");
-            break;
+            return 0;
         }
 
         ack = storeModel(pageId);
@@ -129,13 +141,14 @@ void enrolling(uint16_t pageId)
             break;
         case FINGERPRINT_PACKETRECIEVER:
             printf("Error when receiving package\r\n ");
-            break;
+            return 0;
         case FINGERPRINT_BADLOCATION:
             printf("Addressing PageID is beyond the finger library\r\n ");
-            break;
+            return 0;
         case FINGERPRINT_FLASHERR:
             printf("Error when writing Flash\r\n ");
-            break;
+            return 0;
         }
     }
+    return 1; 
 }

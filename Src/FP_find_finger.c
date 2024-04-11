@@ -32,7 +32,7 @@ int findFinger(const char* message)
 
 
 	clock_t start_time = clock();
-	const clock_t max_execution_time = 60 * CLOCKS_PER_SEC;
+	const clock_t max_execution_time = 30 * CLOCKS_PER_SEC;
 
 	while (ack != FINGERPRINT_OK && (clock() - start_time) <= max_execution_time)
 	{
@@ -56,7 +56,13 @@ int findFinger(const char* message)
 		default:
 			;
 		}
+		usleep(100);
 	}
+	if ((clock() - start_time) > max_execution_time) 
+    {
+        lcd20x4_i2c_puts(1, 0,"Timeout: One minute has passed.");
+        return FINGERPRINT_TIMEOUT;
+    }
 	//to generate character file from the original finger image in ImageBuffer and store the file in CharBuffer1 or CharBuffer2.
 	ack = image2Tz(1);
 	switch (ack)
@@ -92,6 +98,7 @@ int findFinger(const char* message)
 			sprintf(mydata,"%s ID #%s", message,num);
 			lcd20x4_i2c_2ndLine();
 			lcd20x4_i2c_printf(mydata);
+			printf("%s",mydata);
 			return stringToInt(num);
 		case FINGERPRINT_PACKETRECIEVER:
 			lcd20x4_i2c_puts(1, 0,"Error when receiving package");
@@ -102,6 +109,7 @@ int findFinger(const char* message)
 		default:
 			;
 		}
+		sleep(3);
 		if (ack != FINGERPRINT_OK)
 			return 0;
 			

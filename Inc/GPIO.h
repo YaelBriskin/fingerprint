@@ -6,8 +6,7 @@
 
 #define GPIO_BUTTON_IN 66  
 #define GPIO_BUTTON_OUT 67 
-#define BUTTON_NEW 68
-#define GPIO_LED 69
+#define GPIO_BUTTON_NEW 68
 
 int GPIO_init(int pinNumber, const char* direction);
 int GPIO_read(int pinNumber);

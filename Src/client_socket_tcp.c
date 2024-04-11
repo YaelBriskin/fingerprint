@@ -1,8 +1,8 @@
-#include "../Inc/client_socket.h"
+#include "../Inc/client_socket_tcp.h"
 
 int client_socket;
 
-void connectToServer() 
+void connectToServer_tcp() 
 {
     struct sockaddr_in server_addr;
     int attempt = 0;
@@ -49,7 +49,7 @@ void connectToServer()
         //exit(EXIT_FAILURE);
     }
 }
-int socket_write(const char* message)
+int socket_tcp_write(const char* message)
 {
     int attempt = 0;
     ssize_t bytesSent;
@@ -73,7 +73,7 @@ int socket_write(const char* message)
         return 0;  
     }
 }
-void socket_read(char* buffer, size_t bufferSize)
+void socket_tcp_read(char* buffer, size_t bufferSize)
 {
     int attempt = 0;
     while (attempt < MAX_RETRIES) 
@@ -86,14 +86,14 @@ void socket_read(char* buffer, size_t bufferSize)
             // Successfully received data
             buffer[bytesRead] = '\0';
             printf("Received data from the server: %s\n", buffer);
-            GetFromServer(buffer);
+            //GetFromServer(buffer);
         } 
         else if (bytesRead == 0) 
         {
             // Server closed connection
             printf("Server closed the connection\n");
-            closeConnection();           
-            connectToServer();
+            close_tcp_Connection();           
+            connectToServer_tcp();
             //exit(EXIT_FAILURE);
         } 
         else 
@@ -109,11 +109,11 @@ void socket_read(char* buffer, size_t bufferSize)
     if (attempt == MAX_RETRIES) 
     {
         fprintf(stderr, "Failed to receive data after %d attempts\n", MAX_RETRIES);
-        closeConnection();          
-        connectToServer();
+        close_tcp_Connection();          
+        connectToServer_tcp();
     }
 }
-void closeConnection()
+void close_tcp_Connection()
 {
     // Close the connection
     close(client_socket);

@@ -1,6 +1,7 @@
 #include "../Inc/threads.h"
 
-void getCurrentTimeAndDate(char*  dateString , char* timeString) 
+
+void getCurrentTimeAndDate(char *dateString, char *timeString)
 {
     // Получаем текущее системное время
     time_t rawtime;
@@ -20,67 +21,90 @@ void *fingerPrintThread(void *arg)
         char date[20] = {0};
         char time[20] = {0};
         // Initialize GPIO for the button and LED
-        if (GPIO_init(GPIO_BUTTON_IN, "in") != 1 || GPIO_init(GPIO_BUTTON_OUT, "in") != 1 || GPIO_init(GPIO_LED, "out") != 1)
+        if (GPIO_init(GPIO_BUTTON_IN, "in") == 1 && GPIO_init(GPIO_BUTTON_OUT, "in") == 1 && GPIO_init(GPIO_BUTTON_NEW, "in") == 1)
         {
-            printf("GPIO initialization failed!\n");
-            return NULL;
-        }
-        printf("GPIO initialization successful!\n");
-
-        // Initialize UART
-        UART_Init();
-
-        int button_fd_in = GPIO_open(GPIO_BUTTON_IN);
-        int button_fd_out = GPIO_open(GPIO_BUTTON_OUT);
-        while (1)
-        {
-            if (GPIO_read(button_fd_in)) // press button IN
+            printf("GPIO initialization successful!\n");
+            // Initialize UART
+            if (UART_Init(UART2_DEVICE, UART2_BaudRate) && UART_Init(UART4_DEVICE, UART4_BaudRate))
             {
-                int id = findFinger("Hello");
-                if (id)
+                printf("UART initialization successful!\n");
+                while (1)
                 {
-                    getCurrentTimeAndDate(date, time);
-                    DB_write(id, date, time, "in");
+                    int button_fd_in = GPIO_open(GPIO_BUTTON_IN);
+                    int button_fd_out = GPIO_open(GPIO_BUTTON_OUT);
+                    int button_fd_new = GPIO_open(GPIO_BUTTON_NEW);
+                    if (button_fd_in == -1 || button_fd_out == -1 || button_fd_new == -1)
+                    {
+                        printf("Error opening GPIO value file: %s\n", strerror(errno));
+                        break;
+                    }
+                    // press button
+                    if (!GPIO_read(button_fd_in)) // press button IN
+                    {
+                        printf("Button IN pressed!\n");
+                        int id = findFinger("Hello");
+                        if (id)
+                        {
+                            getCurrentTimeAndDate(date, time);
+                            DB_write(id, date, time, "in", "V");
+                        }
+                        else
+                        {
+                            int id=receive_ID_keypad();
+                            DB_write(id, date, time, "in", "X");
+
+                        }
+                        // Perform actions when button IN is pressed
+                    }
+                    if (!GPIO_read(button_fd_out)) // press button OUT
+                    {
+                        printf("Button OUT pressed!\n");
+                        int id = findFinger("Goodbye");
+                        if (id)
+                        {
+                            getCurrentTimeAndDate(date, time);
+                            DB_write(id, date, time, "out","V");
+                        }
+                        else
+                        {
+                            int id=receive_ID_keypad();
+                            DB_write(id, date, time, "out", "X");
+
+                        }
+                        // Perform actions when button OUT is pressed
+                    }
+                    if (!GPIO_read(button_fd_new)) // press button NEW (new employee)
+                    {
+                        printf("Button NEW pressed!\n");
+                        int id =getNextAvailableID();
+                        printf("id =%d\n", id);
+                        if (enrolling(id) == 0)
+                            // If enrolling fails, remove the entry from the database
+                            printf("Enrolling failed. Removing the employee record...\n");
+                    }
+                    usleep(200000);
+                    GPIO_close(GPIO_BUTTON_IN);
+                    GPIO_close(GPIO_BUTTON_OUT);
+                    GPIO_close(GPIO_BUTTON_NEW);
                 }
-                // Perform actions when button IN is pressed
-                printf("Button IN pressed! Turning on LED.\n");
-                turnOnLED();
             }
-            if (GPIO_read(button_fd_out)) // press button OUT
-            {
-                int id = findFinger("Goodbye");
-                if (id)
-                {
-                    getCurrentTimeAndDate(date, time);
-                    DB_write(id, date, time, "out");
-                }
-                // Perform actions when button OUT is pressed
-                printf("Button OUT pressed! Turning on LED.\n");
-                turnOnLED();
-            }
-            usleep(100000); // Pause for 100 milliseconds before the next check
+            else
+                printf("UART initialization failed: %s\n", strerror(errno));
         }
+        else
+            printf("GPIO initialization failed: %s\n", strerror(errno));
         return NULL;
     }
 }
-//every two minutes checks whether there are changes in the code and if there are any,sends them to the server
-void* databaseThread(void* arg)
+// every two minutes checks whether there are changes in the code and if there are any,sends them to the server
+void *databaseThread(void *arg)
 {
-    while (1) 
+    while (1)
     {
         DB_find();
-        sleep(120); 
+        sleep(120);
     }
     return NULL;
 }
 
-void* socketThread(void* arg) 
-{
-    char buffer[SIZE_Eth];
-    while (1) 
-    {
-        // Receive data
-        socket_read(buffer,SIZE_Eth); 
-        usleep(500000); 
-    }
-}
+

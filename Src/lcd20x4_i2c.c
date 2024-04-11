@@ -153,9 +153,9 @@ int wordLength(const char *str)
 void lcd20x4_i2c_puts(uint8_t x, uint8_t y, const char *str)
 {
   lcd20x4_i2c_clear();
-  usleep(20);
+  usleep(1000);
   lcd20x4_i2c_setCursor(x, y);
-  usleep(20);
+  usleep(1000);
   currentX = x;
   currentY = y;
   uint8_t wordStartX = currentX; // Переменная для отслеживания начала текущего слова
@@ -177,7 +177,7 @@ void lcd20x4_i2c_puts(uint8_t x, uint8_t y, const char *str)
       wordStartX = currentY;
     }
     else
-    {
+    { 
       int wordLen = wordLength(&str[i]);
       if ((currentY + wordLen) >= _LCD_COLS)
       {

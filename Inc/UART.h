@@ -8,11 +8,14 @@
 #include <fcntl.h>
 #include <string.h>
 
-#define UART_DEVICE "/dev/ttyS1"
-#define UART_BaudRate B9600
+#define UART4_DEVICE "/dev/ttyS4"
+#define UART2_DEVICE "/dev/ttyS2"
+#define UART2_BaudRate B57600
+#define UART4_BaudRate B9600
+
 #define MAX_RETRIES 10
 
-void UART_Init();
+int UART_Init(const char* device, speed_t UART_BaudRate);
 void UART_write(const char* data, int size);
 int UART_read(char* buffer, int size);
 void UART_close();

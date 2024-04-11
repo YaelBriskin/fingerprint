@@ -187,8 +187,7 @@ uint8_t getTemplateCount(void) {
 }
 void SendToUart(fingerprintPacket *packet)
 {
-
-	uint16_t Size=9+(packet->length);
+	uint16_t Size= MIN_SIZE_PACKET + (packet->length);
 	uint16_t i=0;
 	uint8_t packetData[Size];
 
@@ -204,43 +203,46 @@ void SendToUart(fingerprintPacket *packet)
 
 	packetData[i++]= (uint8_t)((packet->length)>>8);
 	packetData[i++]= (uint8_t)((packet->length) & 0xFF);
-	 uint16_t Sum = ((packet->length) >> 8) + ((packet->length) & 0xFF) + packet->type;//
+	uint16_t Sum = ((packet->length) >> 8) + ((packet->length) & 0xFF) + packet->type;
 
-	 for (int j = 0; j <packet->length-2; j++)
-	   {
-		 packetData[i++]=(packet->data[j]);
-		 Sum += packet->data[j];
-	   }
-	 packetData[i++]=(uint8_t)(Sum>>8);
-	 packetData[i]=(uint8_t)(Sum & 0xFF);
-     UART_write(packetData, Size);
+	for (int j = 0; j <packet->length-2; j++)
+	{
+		packetData[i++]=(packet->data[j]);
+		Sum += packet->data[j];
+	}
+	packetData[i++]=(uint8_t)(Sum>>8);
+	packetData[i]=(uint8_t)(Sum & 0xFF);
+    UART_write(packetData, Size);
 }
 
 //Get packet from FPM
 uint8_t GetFromUart(fingerprintPacket *packet)
 {
+	uint8_t pData[SIZE]={0};
 	int count_received_data=0;
 	uint8_t idx = 0;
 	uint16_t length = 0;
 	int chkSum;
 	SendToUart(packet);
-	if(UART_read((uint8_t*) pData,MIN_SIZE_PACKET)==0)
-	{
+	sleep(1);
+	// Check the first data read
+	if(UART_read(pData,MIN_SIZE_PACKET)==0)
 		return FINGERPRINT_TIMEOUT;
-	}
-	length = (uint16_t) pData[7] << 8;
-	length = (uint16_t) pData[8];
-	if(UART_read((uint8_t*)pData+MIN_SIZE_PACKET,length)==0)
-	{
+	// shift a byte 8 bits to the left and then combine it with the next byte
+	length = ((uint16_t)pData[7] << 8) | pData[8];
+	if (length > SIZE - MIN_SIZE_PACKET)
+    	// Packet length exceeds buffer size
+    	return -1;
+
+	// Check the second data read
+	if(UART_read(pData+MIN_SIZE_PACKET,length)==0)
 		return FINGERPRINT_TIMEOUT;
-	}
-	if (pData[idx] == (FINGERPRINT_STARTCODE >> 8))
-	{
-		packet->start_code = (uint16_t) pData[idx++] << 8;
-		packet->start_code |= pData[idx++];
-	}
-	if (packet->start_code != FINGERPRINT_STARTCODE)
-		return FINGERPRINT_BADPACKET;
+
+	if ((pData[idx] != (FINGERPRINT_STARTCODE >> 8)) || ((pData[idx+1] != (FINGERPRINT_STARTCODE & 0xFF)))) 
+    	return FINGERPRINT_BADPACKET;
+
+	packet->start_code = (uint16_t) pData[idx++] << 8;
+	packet->start_code |= pData[idx++];
 
 	packet->address[0] = pData[idx++];
 	packet->address[1] = pData[idx++];
@@ -255,39 +257,14 @@ uint8_t GetFromUart(fingerprintPacket *packet)
 	memset(packet->data, 0, SIZE);
 	memcpy(packet->data, pData + MIN_SIZE_PACKET, length - 2);
 
-	packet->Checksum = (uint16_t) pData[idx++] << 8;
-	packet->Checksum |= (uint16_t) pData[idx];
+	// shift the byte 8 bits to the left and then concatenate it with the low byte
+	packet->Checksum = ((uint16_t)pData[idx++] << 8) | pData[idx];
+
 	chkSum = packet->length + packet->type;
 	for (int i = 0; i < packet->length - 2; i++)
 		chkSum += packet->data[i];
 	if (chkSum != packet->Checksum )
 		return FINGERPRINT_BADPACKET;
+	printf("%s", packet->data);
 	return packet->data[0];
-}
-void GetFromServer(char * request)
-{
-	char command = request[0];
-	uint16_t byte = 0;
-	switch(command)
-    {
-	case 'e' :
-		//to enroll a fingerprint and save ID in Flash memory
-		if(isdigit(request[1]))
-		{
-			byte = (uint16_t)atoi(&request[1]);
-			enrolling(byte);
-		}
-		break;
-	case 'd':
-		//delete a specific template in the Flash library
-		if(isdigit(request[1]))
-		{
-			byte = (uint16_t)atoi(&request[1]);
-			deleteModel(byte);
-		}
-		break;
-	default:
-		;
-	}
-	memset(request, 0, SIZE_Eth);
 }

@@ -24,15 +24,12 @@ void I2C_write(uint8_t *buffer, int size)
     {
         if (write(i2c_fd, buffer, size) == size)
             break;
-        perror("Failed to write to I2C bus");
+        fprintf(stderr, "Failed to write to I2C bus\n");
         retries_I2C_transmit++;
     } while (retries_I2C_transmit < MAX_RETRIES);
 
     if (retries_I2C_transmit == MAX_RETRIES)
-    {
-        perror("Error: Maximum retries reached");
         fprintf(stderr, "Error: Maximum retries reached\n");
-    }
 }
 
 void I2C_close()

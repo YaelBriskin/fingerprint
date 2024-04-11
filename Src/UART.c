@@ -2,13 +2,14 @@
 
 int uart_fd;
 
-void UART_Init()
+int UART_Init(const char* UART_DEVICE, speed_t UART_BaudRate)
 {
-    uart_fd = open(UART_DEVICE, O_RDWR | O_NOCTTY | O_NDELAY);
+    /////
+    uart_fd = open(UART_DEVICE, O_RDWR| O_NOCTTY | O_NDELAY);
     if (uart_fd == -1)
     {
         perror("Error opening UART");
-        exit(EXIT_FAILURE);
+        return 0;
     }
     struct termios options;
     /* Serial Configuration */
@@ -28,6 +29,7 @@ void UART_Init()
     tcsetattr(uart_fd, TCSANOW, &options);
     /* Flush the input (read) buffer */
     tcflush(uart_fd, TCIOFLUSH);
+    return 1;
 }
 
 void UART_write(const char *data, int size)
@@ -35,14 +37,23 @@ void UART_write(const char *data, int size)
     int retries_UART_write = 0;
     do
     {
-        if (write(uart_fd, data, size) == size)
+        int ret = write(uart_fd, data, size) ;
+        if (ret == size)
             break;
-        perror("Failed to write to UART");
+        else if (ret == -1)
+        {
+            perror("Failed to write to UART");
+            exit(EXIT_FAILURE);
+        }
+        else if (ret != size)
+            printf("Error: Only %d out of %d bytes were written!\r\n", ret, size);
+
         retries_UART_write++;
+        usleep(100);
     } while (retries_UART_write < MAX_RETRIES);
 
     if (retries_UART_write == MAX_RETRIES)
-        fprintf(stderr, "Error: Maximum retries reached\n");
+        fprintf(stderr, "Error: Maximum retries reached\r\n");
 }
 
 int UART_read(char *buffer, int size)
@@ -50,14 +61,28 @@ int UART_read(char *buffer, int size)
     int retries_UART_read = 0;
     do
     {
-        if (read(uart_fd, buffer, size) == size)
+        int bytes_read = read(uart_fd, buffer, size);
+
+        if (bytes_read == size)
             return 1;
-        perror("Error reading from UART");
-        retries_UART_read++;
-    }while (retries_UART_read < MAX_RETRIES);
+        else if (bytes_read == 0)
+        {
+            printf("UART input buffer is empty.\n");
+            break;
+        }
+        else
+        {
+            fprintf(stderr, "Error reading from UART: %s\n", strerror(errno));
+            retries_UART_read++;
+            usleep(100);
+        }
+    } while (retries_UART_read < MAX_RETRIES);
 
     if (retries_UART_read == MAX_RETRIES)
+    {
         fprintf(stderr, "Error: Maximum retries reached\n");
+        return 0;
+    }
     return 0;
 }
 

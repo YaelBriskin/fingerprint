@@ -2,19 +2,31 @@
 
 int GPIO_init(int pinNumber, const char* direction) 
 {
-    char buffer[50];
-    snprintf(buffer, sizeof(buffer), "/sys/class/gpio/gpio%d", pinNumber);
+    char gpioPath[50];
+    char direction_path[50];
+
+    snprintf(gpioPath, sizeof(gpioPath), "/sys/class/gpio/gpio%d", pinNumber);
 
     // Check if the GPIO folder already exists
-    if (access(buffer, F_OK) != 0) 
+    if (access(gpioPath, F_OK) != 0) 
     {
-        // If it doesn't exist, create the GPIO folder
-        snprintf(buffer, sizeof(buffer), "echo %d > /sys/class/gpio/export", pinNumber);
-        system(buffer);
+        // If the folder does not exist, create it
+        int export_fd = open("/sys/class/gpio/export", O_WRONLY);
+        if (export_fd == -1) {
+            perror("Error opening GPIO export");
+            return 0;
+        }
+
+        // export GPIO
+        char pinBuffer[4];
+        snprintf(pinBuffer, sizeof(pinBuffer), "%d", pinNumber);
+        write(export_fd, pinBuffer, strlen(pinBuffer));
+        close(export_fd);
     }
 
-    snprintf(buffer, sizeof(buffer), "/sys/class/gpio/gpio%d/direction", pinNumber);
-    int gpio_fd = open(buffer, O_WRONLY);
+    snprintf(direction_path, sizeof(direction_path), "/sys/class/gpio/gpio%d/direction", pinNumber);
+    // Open the file direction
+    int gpio_fd = open(direction_path, O_WRONLY);
     if (gpio_fd == -1) 
     {
         perror("Error opening GPIO direction");
@@ -38,26 +50,12 @@ int GPIO_read(int gpio_fd)
     }
     return (value == '1') ? 1 : 0;
 }
-void turnOnLED() 
-{
-    int ledState = 1;
-    char buffer[50];
-    snprintf(buffer, sizeof(buffer), "/sys/class/gpio/gpio%d/value", GPIO_LED);
-    int led_fd = open(buffer, O_WRONLY);
-    if (led_fd == -1) {
-        perror("Error opening LED value file");
-        exit(EXIT_FAILURE);
-    }
-
-    write(led_fd, &ledState, sizeof(ledState));
-    close(led_fd);
-}
 
 int GPIO_open(int pinNumber)
 {
-    char buffer[50];
-    snprintf(buffer, sizeof(buffer), "/sys/class/gpio/gpio%d/value", pinNumber);
-    int fd = open(buffer, O_RDONLY);
+    char gpioPath[50];
+    snprintf(gpioPath, sizeof(gpioPath), "/sys/class/gpio/gpio%d/value", pinNumber);
+    int fd = open(gpioPath, O_RDONLY);
     if (fd == -1) 
     {
         perror("Error opening GPIO value file");
