@@ -8,7 +8,6 @@
 #include <string.h>
 #include <unistd.h>   
 #include <stdint.h>
-<<<<<<< HEAD:Inc/I2C.h
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
 
@@ -18,13 +17,6 @@
 
 #define MAX_RETRIES 10
 
-int I2C_Init();
-=======
-#include "main.h"
-
-#define I2C_BUS "/dev/i2c-2" 
-
 void I2C_Init();
->>>>>>> ffa829577f27103bdaba10162dd87beb8dbd051e:I2C.h
 void I2C_write(uint8_t *buffer, int size);
 void I2C_close();

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,21 +45,4 @@ int main()
   // Ожидаем завершения потока
   pthread_join(thread_datetime, NULL);
   pthread_join(thread_FPM, NULL);
-=======
-#include "main.h"
-
-
-int main() 
-{
-    // Initialize I2C Display
-    lcd16x2_i2c_init();
-
-    // Create a thread for checking the button state
-    pthread_t thread;
-    if (pthread_create(&thread, NULL, buttonThread, NULL) != 0) 
-    {
-        perror("Error creating thread");
-        exit(EXIT_FAILURE);
-    }
->>>>>>> ffa829577f27103bdaba10162dd87beb8dbd051e
 }
