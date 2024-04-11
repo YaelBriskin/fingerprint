@@ -78,9 +78,9 @@ bool lcd20x4_i2c_init()
  */
 void lcd20x4_i2c_setCursor(uint8_t row, uint8_t col)
 {
-  if (row >= 4)
+  if (row > 3)
     row = 0; // Если row больше 3, установим его в 0
-  if (col >= 20)
+  if (col > 19)
     col = 0;
   // Адресация строк 20x4 дисплея:
   const uint8_t row_offsets[] = {0x00, 0x40, 0x14, 0x54};
@@ -138,7 +138,15 @@ void lcd20x4_i2c_printf(const char *str, ...)
     lcd20x4_i2c_sendData((uint8_t)stringArray[i]);
   }
 }
-
+// Function to display a message on the LCD at the specified row and column
+void lcd20x4_i2c_print(uint8_t row, uint8_t col, const char *message) 
+{
+    lcd20x4_i2c_setCursor(row, col);
+    for (int i = 0; message[i] != '\0'; i++) 
+    {
+        lcd20x4_i2c_sendData((uint8_t)message[i]);
+    }
+}
 // Функция для определения длины слова (до первого пробела)
 int wordLength(const char *str)
 {

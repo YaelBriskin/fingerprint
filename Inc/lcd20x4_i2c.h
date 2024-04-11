@@ -26,6 +26,7 @@ void lcd20x4_i2c_display(bool state);
 void lcd20x4_i2c_shiftRight(uint8_t offset);
 void lcd20x4_i2c_shiftLeft(uint8_t offset);
 void lcd20x4_i2c_printf(const char* str, ...);
+void lcd20x4_i2c_print(uint8_t row, uint8_t col, const char *message);
 void lcd20x4_i2c_display(bool state);
 void lcd20x4_i2c_shiftRight(uint8_t offset);
 void lcd20x4_i2c_shiftLeft(uint8_t offset);

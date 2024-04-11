@@ -50,7 +50,7 @@ void *fingerPrintThread(void *arg)
                         }
                         else
                         {
-                            int id=receive_ID_keypad();
+                            int id=enter_ID_keypad();
                             DB_write(id, date, time, "in", "X");
 
                         }
@@ -67,7 +67,7 @@ void *fingerPrintThread(void *arg)
                         }
                         else
                         {
-                            int id=receive_ID_keypad();
+                            int id=enter_ID_keypad();
                             DB_write(id, date, time, "out", "X");
 
                         }
@@ -79,8 +79,11 @@ void *fingerPrintThread(void *arg)
                         int id =getNextAvailableID();
                         printf("id =%d\n", id);
                         if (enrolling(id) == 0)
+                        {
                             // If enrolling fails, remove the entry from the database
-                            printf("Enrolling failed. Removing the employee record...\n");
+                            printf("Enrolling failed.Keypad input...\n");
+                            enter_ID_keypad();
+                        }
                     }
                     usleep(200000);
                     GPIO_close(GPIO_BUTTON_IN);

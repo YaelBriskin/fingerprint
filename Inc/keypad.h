@@ -13,5 +13,5 @@
 #define MAX_LENGTH_ID 3
 #define MAX_FINGERPRINT 100
 
-int receive_ID_keypad();
+int enter_ID_keypad();
 char convert_to_char(uint8_t value);

@@ -1,3 +1,6 @@
+#ifndef I2C_H_
+#define I2C_H_
+
 #include <unistd.h>   
 #include <sys/types.h> 
 #include <errno.h>     
@@ -17,6 +20,8 @@
 
 #define MAX_RETRIES 10
 
-void I2C_Init();
+int I2C_Init();
 void I2C_write(uint8_t *buffer, int size);
 void I2C_close();
+
+#endif /* I2C_H_ */
