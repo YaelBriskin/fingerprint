@@ -1,13 +1,11 @@
 #include "../Inc/UART.h"
 
-int uart_fd;
-
 int UART_Init(const char* UART_DEVICE, speed_t UART_BaudRate)
 {
-    /////
-    uart_fd = open(UART_DEVICE, O_RDWR| O_NOCTTY | O_NDELAY);
+    int uart_fd = open(UART_DEVICE, O_RDWR| O_NOCTTY );
     if (uart_fd == -1)
     {
+        syslog_log(LOG_ERR, __func__, "strerror", "Error opening UART", strerror(errno));
         perror("Error opening UART");
         return 0;
     }
@@ -29,10 +27,10 @@ int UART_Init(const char* UART_DEVICE, speed_t UART_BaudRate)
     tcsetattr(uart_fd, TCSANOW, &options);
     /* Flush the input (read) buffer */
     tcflush(uart_fd, TCIOFLUSH);
-    return 1;
+    return uart_fd;
 }
 
-void UART_write(const char *data, int size)
+void UART_write(int uart_fd,const char *data, int size)
 {
     int retries_UART_write = 0;
     do
@@ -42,51 +40,59 @@ void UART_write(const char *data, int size)
             break;
         else if (ret == -1)
         {
+            syslog_log(LOG_ERR, __func__, "strerror", "Failed to write to UART", strerror(errno));
             perror("Failed to write to UART");
             exit(EXIT_FAILURE);
         }
         else if (ret != size)
+        {
+            syslog_log(LOG_ERR, __func__, "format", "Error: Only %d out of %d bytes were written!", ret, size);
             printf("Error: Only %d out of %d bytes were written!\r\n", ret, size);
-
+        }
         retries_UART_write++;
         usleep(100);
     } while (retries_UART_write < MAX_RETRIES);
 
     if (retries_UART_write == MAX_RETRIES)
+    {
+        syslog_log(LOG_ERR, __func__, "strerr", "Error: Maximum retries reached", NULL);
         fprintf(stderr, "Error: Maximum retries reached\r\n");
+    }
 }
 
-int UART_read(char *buffer, int size)
+int UART_read(int uart_fd,char *buffer, int size)
 {
     int retries_UART_read = 0;
     do
     {
         int bytes_read = read(uart_fd, buffer, size);
-
         if (bytes_read == size)
             return 1;
         else if (bytes_read == 0)
         {
+            //syslog_log(LOG_ERR, __func__, "strerr", "UART input buffer is empty.", NULL);
             printf("UART input buffer is empty.\n");
             break;
         }
         else
         {
+            //syslog_log(LOG_ERR, __func__, "strerror", "Error reading from UART:", strerror(errno));
             fprintf(stderr, "Error reading from UART: %s\n", strerror(errno));
             retries_UART_read++;
-            usleep(100);
+            usleep(10000);
         }
     } while (retries_UART_read < MAX_RETRIES);
 
     if (retries_UART_read == MAX_RETRIES)
     {
+        //syslog_log(LOG_ERR, __func__, "strerr", "Error: Maximum retries reached", NULL);
         fprintf(stderr, "Error: Maximum retries reached\n");
         return 0;
     }
     return 0;
 }
 
-void UART_close()
+void UART_close(int uart_fd)
 {
     close(uart_fd);
 }

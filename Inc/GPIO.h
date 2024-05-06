@@ -1,8 +1,12 @@
+#ifndef GPIO_H
+#define GPIO_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include "syslog_util.h"
 
 #define GPIO_BUTTON_IN 66  
 #define GPIO_BUTTON_OUT 67 
@@ -14,3 +18,5 @@ int GPIO_open(int pinNumber);
 void GPIO_close(int gpio_fd);
 
 void turnOnLED();
+
+#endif 

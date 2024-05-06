@@ -12,6 +12,7 @@
 #include "../Inc/lcd20x4_i2c.h"
 
 extern bool showMessage;
+extern bool delayDisplay;
 
 void showMessageOnDisplay(const char *message, ...);
 

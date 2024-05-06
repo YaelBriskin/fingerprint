@@ -36,6 +36,8 @@
 
 // signature and packet ids
 #define FINGERPRINT_STARTCODE 0xEF01
+#define FINGERPRINT_SECURITY_REG_ADDR 0x5
+#define FINGERPRINT_WRITE_REG 0x0E 
 
 #define FINGERPRINT_CONTROLCODE 0x0
 #define FINGERPRINT_COMMANDPACKET 0x1
@@ -122,21 +124,33 @@ enum
    FPM_SETPARAM_PACKET_LEN      //=6 //длина пакета данных
 };
 // управление скоростью передачи данных
-enum
+typedef enum
 {
-   FPM_BAUD_9600 = 1,
-   FPM_BAUD_19200,
-   FPM_BAUD_28800,
-   FPM_BAUD_38400,
-   FPM_BAUD_48000,
-   FPM_BAUD_57600,
-   FPM_BAUD_67200,
-   FPM_BAUD_76800,
-   FPM_BAUD_86400,
-   FPM_BAUD_96000,
-   FPM_BAUD_105600,
-   FPM_BAUD_115200
-};
+   FPM_BAUDRATE_9600 = 1,
+   FPM_BAUDRATE_19200,
+   FPM_BBAUDRATE_28800,
+   FPM_BAUDRATE_38400,
+   FPM_BAUDRATE_48000,
+   FPM_BAUDRATE_57600,
+   FPM_BAUDRATE_67200,
+   FPM_BAUDRATE_76800,
+   FPM_BAUDRATE_86400,
+   FPM_BAUDRATE_96000,
+   FPM_BAUDRATE_105600,
+   FPM_BAUDRATE_115200
+}FingerprintBaudRate;
+
+typedef enum {
+    FINGERPRINT_SECURITY_LEVEL_1 = 1,
+    FINGERPRINT_SECURITY_LEVEL_2,
+    FINGERPRINT_SECURITY_LEVEL_3,
+    FINGERPRINT_SECURITY_LEVEL_4, 
+    FINGERPRINT_SECURITY_LEVEL_5 
+} FingerprintSecurityLevel;
+
+void printParameters();
+uint8_t writeRegister(uint8_t regAdd, uint8_t value);
+uint8_t setSecurityLevel(uint8_t level);
 uint8_t getImage(void);
 uint8_t image2Tz(uint8_t slot);
 void receive_data(void);
@@ -150,7 +164,6 @@ uint8_t fingerFastSearch(void);
 uint8_t getTemplateCount(void);
 uint8_t getParameters(void);
 void SendToUart(fingerprintPacket *packet);
-uint8_t GetFromUart(fingerprintPacket *packet);
 uint8_t communicate_link(void);
-void GetFromServer(char *request);
+uint8_t GetFromUart(fingerprintPacket *packet);
 #endif // PACKET_H

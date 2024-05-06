@@ -11,7 +11,6 @@
 #include <pthread.h>
 #include "../Inc/GPIO.h"
 #include "../Inc/packet.h"
-#include "../Inc/client_socket_http.h"
 #include "../Inc/UART.h"
 #include "../Inc/DataBase.h"
 #include "../Inc/FP_find_finger.h"

@@ -11,7 +11,7 @@ FE = c
 #  -Wall  - this flag is used to turn on most compiler warnings
 #  -o 	  - output flag 
 
-FLAGS = -pthread  -lsqlite3 -lcurl
+FLAGS = -pthread  -lsqlite3 -lcurl -lcjson
 DEBUG = -g
 MAIN_DIR = ./build
 OUT_DIR = $(MAIN_DIR)/out

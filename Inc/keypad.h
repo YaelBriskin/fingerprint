@@ -1,3 +1,6 @@
+#ifndef KEYPAD_H
+#define KEYPAD_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -15,3 +18,5 @@
 
 int enter_ID_keypad();
 char convert_to_char(uint8_t value);
+
+#endif

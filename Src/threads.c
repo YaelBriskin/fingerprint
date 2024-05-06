@@ -1,5 +1,6 @@
 #include "../Inc/threads.h"
 
+int uart2_fd,uart4_fd;
 
 void getCurrentTimeAndDate(char *dateString, char *timeString)
 {
@@ -25,7 +26,9 @@ void *fingerPrintThread(void *arg)
         {
             printf("GPIO initialization successful!\n");
             // Initialize UART
-            if (UART_Init(UART2_DEVICE, UART2_BaudRate) && UART_Init(UART4_DEVICE, UART4_BaudRate))
+            uart2_fd=UART_Init(UART2_DEVICE, UART2_BaudRate);
+            uart4_fd=UART_Init(UART4_DEVICE, UART4_BaudRate);
+            if (uart2_fd && uart4_fd)
             {
                 printf("UART initialization successful!\n");
                 while (1)
@@ -35,7 +38,8 @@ void *fingerPrintThread(void *arg)
                     int button_fd_new = GPIO_open(GPIO_BUTTON_NEW);
                     if (button_fd_in == -1 || button_fd_out == -1 || button_fd_new == -1)
                     {
-                        printf("Error opening GPIO value file: %s\n", strerror(errno));
+                        syslog_log(LOG_ERR, __func__, "strerror", "Error opening GPIO value file",strerror(errno));
+                        //printf("Error opening GPIO value file: %s\n", strerror(errno));
                         break;
                     }
                     // press button
@@ -51,8 +55,9 @@ void *fingerPrintThread(void *arg)
                         else
                         {
                             int id=enter_ID_keypad();
-                            DB_write(id, date, time, "in", "X");
-
+                            delayDisplay=false;
+                            if(id>0)
+                                DB_write(id, date, time, "in", "X");
                         }
                         // Perform actions when button IN is pressed
                     }
@@ -68,7 +73,9 @@ void *fingerPrintThread(void *arg)
                         else
                         {
                             int id=enter_ID_keypad();
-                            DB_write(id, date, time, "out", "X");
+                            delayDisplay=false;
+                            if(id>0)
+                                DB_write(id, date, time, "out", "X");
 
                         }
                         // Perform actions when button OUT is pressed
@@ -81,8 +88,11 @@ void *fingerPrintThread(void *arg)
                         if (enrolling(id) == 0)
                         {
                             // If enrolling fails, remove the entry from the database
+                            syslog_log(LOG_ERR, __func__, "format", "Enrolling failed. Keypad input...");
                             printf("Enrolling failed.Keypad input...\n");
                             enter_ID_keypad();
+                            delayDisplay=false;
+
                         }
                     }
                     usleep(200000);
@@ -92,10 +102,12 @@ void *fingerPrintThread(void *arg)
                 }
             }
             else
-                printf("UART initialization failed: %s\n", strerror(errno));
+                syslog_log(LOG_ERR, __func__, "strerror", "UART initialization failed", strerror(errno));
+                //printf("UART initialization failed: %s\n", strerror(errno));
         }
         else
-            printf("GPIO initialization failed: %s\n", strerror(errno));
+            syslog_log(LOG_ERR, __func__, "strerror", "GPIO initialization failed", strerror(errno));
+            //printf("GPIO initialization failed: %s\n", strerror(errno));
         return NULL;
     }
 }

@@ -17,7 +17,7 @@ void lcd20x4_i2c_sendCommand(uint8_t command)
           command_0_3 | LCD_BK_LIGHT,
       };
   I2C_write(i2cData, 4);
-  usleep(50);
+  //usleep(50);
 }
 
 void lcd20x4_i2c_sendData(uint8_t data)
@@ -32,7 +32,7 @@ void lcd20x4_i2c_sendData(uint8_t data)
           data_0_3 | LCD_BK_LIGHT | LCD_RS,
       };
   I2C_write(i2cData, 4);
-  usleep(20);
+  //usleep(20);
 }
 
 /**
@@ -41,32 +41,32 @@ void lcd20x4_i2c_sendData(uint8_t data)
  */
 bool lcd20x4_i2c_init()
 {
-  usleep(50);
+  usleep(50000);
   if (I2C_Init() != 1)
     return false;
   // Initialise LCD for 4-bit operation
   // 1. Wait at least 15ms
-  usleep(45);
+  usleep(45000);
   // 2. Attentions sequence
   lcd20x4_i2c_sendCommand(0x30);
-  usleep(5);
+  usleep(5000);
   lcd20x4_i2c_sendCommand(0x30);
-  usleep(1);
+  usleep(1000);
   lcd20x4_i2c_sendCommand(0x30);
-  usleep(8);
+  usleep(8000);
   lcd20x4_i2c_sendCommand(0x20);
-  usleep(8);
+  usleep(8000);
 
   lcd20x4_i2c_sendCommand(LCD_FUNCTIONSET | LCD_FUNCTION_N);
-  usleep(1);
+  usleep(1000);
   lcd20x4_i2c_sendCommand(LCD_DISPLAYCONTROL);
-  usleep(1);
+  usleep(1000);
   lcd20x4_i2c_sendCommand(LCD_CLEARDISPLAY);
-  usleep(3);
+  usleep(3000);
   lcd20x4_i2c_sendCommand(0x04 | LCD_ENTRY_ID);
-  usleep(1);
+  usleep(1000);
   lcd20x4_i2c_sendCommand(LCD_DISPLAYCONTROL | LCD_DISPLAY_D);
-  usleep(3);
+  usleep(3000);
 
   return true;
 }
@@ -111,7 +111,7 @@ void lcd20x4_i2c_4thLine(void)
 void lcd20x4_i2c_clear(void)
 {
   lcd20x4_i2c_sendCommand(LCD_CLEARDISPLAY);
-  usleep(5);
+  usleep(3000);
 }
 // Display ON/OFF, to hide all characters, but not clear
 void lcd20x4_i2c_display(bool state)
@@ -141,6 +141,7 @@ void lcd20x4_i2c_printf(const char *str, ...)
 // Function to display a message on the LCD at the specified row and column
 void lcd20x4_i2c_print(uint8_t row, uint8_t col, const char *message) 
 {
+    //usleep(1000);
     lcd20x4_i2c_setCursor(row, col);
     for (int i = 0; message[i] != '\0'; i++) 
     {
@@ -160,8 +161,7 @@ int wordLength(const char *str)
 }
 void lcd20x4_i2c_puts(uint8_t x, uint8_t y, const char *str)
 {
-  lcd20x4_i2c_clear();
-  usleep(1000);
+  //usleep(1000);
   lcd20x4_i2c_setCursor(x, y);
   usleep(1000);
   currentX = x;
@@ -180,7 +180,7 @@ void lcd20x4_i2c_puts(uint8_t x, uint8_t y, const char *str)
         currentY = 0;
         currentX++;
         lcd20x4_i2c_setCursor(currentX, currentY);
-        usleep(10);
+        //usleep(10);
       }
       wordStartX = currentY;
     }
@@ -193,7 +193,7 @@ void lcd20x4_i2c_puts(uint8_t x, uint8_t y, const char *str)
         wordStartX = 0;
         currentX++;
         lcd20x4_i2c_setCursor(currentX, currentY);
-        usleep(10);
+        //usleep(10);
       }
       //
       for (int j = 0; j < wordLen; j++)

@@ -38,12 +38,13 @@ void *displayThread(void *arg)
     {
         if (showMessage) 
         {
-            pthread_mutex_lock(&displayMutex);
+            lcd20x4_i2c_clear();
+            //pthread_mutex_lock(&displayMutex);
             if(LCD_data.row==-1 || LCD_data.col==-1 )
                 lcd20x4_i2c_printf(LCD_data.currentMessage);
             else
                 lcd20x4_i2c_puts(LCD_data.row, LCD_data.col, LCD_data.currentMessage);
-            pthread_mutex_unlock(&displayMutex);
+            //pthread_mutex_unlock(&displayMutex);
             if (!delayDisplay)
             {
                 showMessage = false;

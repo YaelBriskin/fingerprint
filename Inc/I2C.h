@@ -1,5 +1,5 @@
-#ifndef I2C_H_
-#define I2C_H_
+#ifndef I2C_H
+#define I2C_H
 
 #include <unistd.h>   
 #include <sys/types.h> 
@@ -13,7 +13,7 @@
 #include <stdint.h>
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
-
+#include "syslog_util.h"
 
 #define I2C_BUS "/dev/i2c-2" 
 #define I2C_ADDRESS 0x27 
@@ -24,4 +24,4 @@ int I2C_Init();
 void I2C_write(uint8_t *buffer, int size);
 void I2C_close();
 
-#endif /* I2C_H_ */
+#endif /* I2C_H */

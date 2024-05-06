@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include "../Inc/client_socket_http.h"
 #include "../Inc/curl_client.h"
+#include "../Inc/syslog_util.h"
 
 
 void DB_open();

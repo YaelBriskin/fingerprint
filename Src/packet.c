@@ -8,10 +8,9 @@ protocol[][][]...
 
 
  */
-uint8_t pData[SIZE]={0};
-uint8_t RX_UART2[SIZE_Eth];
-uint8_t getTempCount[SIZE_Eth] = "getT\n";
-extern int uart_fd;
+uint8_t getTempCount[7] = "getT\n";
+ReadSysPara parameters;
+extern int uart2_fd;
 
 //Gets the command packet
 #define GET_CMD_PACKET(...) \
@@ -19,8 +18,7 @@ extern int uart_fd;
 	fingerprintPacket packet;\
 	uint8_t ack=0;\
 	int length=0;\
-	int chkSum=0;\
-	packet.start_code=0xEF01;\
+	packet.start_code=FINGERPRINT_STARTCODE;\
 	packet.address[0] = 0xFF;\
 	packet.address[1] = 0xFF;\
 	packet.address[2] = 0xFF;\
@@ -30,28 +28,58 @@ extern int uart_fd;
 	if(sizeof(Data)<SIZE)\
 	{\
 		memcpy(packet.data, Data ,length);\
-		for(int i=length;i<=SIZE;packet.data[i++]=0);\
+		memset(packet.data + length, 0, SIZE - length);\
 	}\
 	else\
 	{\
-		length=SIZE;\
 		memcpy(packet.data, Data, SIZE);\
 	}\
 	packet.length=length+2;\
-	chkSum=packet.type+packet.length;\
-	for(int i=0;i<packet.length-2;i++)\
-		chkSum+=packet.data[i];\
-	packet.Checksum=chkSum;\
 	ack=GetFromUart(&packet);\
 	if(ack!=FINGERPRINT_OK)return ack;\
 
-//Sends the command packet
-#define SEND_CMD_PACKET(...) GET_CMD_PACKET(__VA_ARGS__);  return packet.data[0];\
-
+//Sends the command packet 
+#define SEND_CMD_PACKET(...)           \
+  GET_CMD_PACKET(__VA_ARGS__);         \
+  return packet.data[0];
 //Confirm that communicate is connect between  module  and  upper monitor
 uint8_t communicate_link(void)
 {
 	SEND_CMD_PACKET(FINGERPRINT_HANDSHAKE, FINGERPRINT_CONTROLCODE);
+}
+
+uint8_t getParameters(void) 
+{
+  GET_CMD_PACKET(FINGERPRINT_READSYSPARAM);
+
+  parameters.status_reg = ((uint16_t)packet.data[1] << 8) | packet.data[2];
+  parameters.system_id = ((uint16_t)packet.data[3] << 8) | packet.data[4];
+  parameters.capacity = ((uint16_t)packet.data[5] << 8) | packet.data[6];
+  parameters.security_level = ((uint16_t)packet.data[7] << 8) | packet.data[8];
+  parameters.device_addr = ((uint32_t)packet.data[9] << 24) |
+                ((uint32_t)packet.data[10] << 16) |
+                ((uint32_t)packet.data[11] << 8) | (uint32_t)packet.data[12];
+  parameters.packet_len = ((uint16_t)packet.data[13] << 8) | packet.data[14];
+  if (parameters.packet_len == 0) {
+    parameters.packet_len = 32;
+  } else if (parameters.packet_len == 1) {
+    parameters.packet_len = 64;
+  } else if (parameters.packet_len == 2) {
+    parameters.packet_len = 128;
+  } else if (parameters.packet_len == 3) {
+    parameters.packet_len = 256;
+  }
+  parameters.baud_rate = (((uint16_t)packet.data[15] << 8) | packet.data[16]) * 9600;
+
+  return packet.data[0];
+}
+uint8_t writeRegister(uint8_t regAdd, uint8_t value) 
+{
+  	SEND_CMD_PACKET(FINGERPRINT_WRITE_REG, regAdd, value);
+}
+uint8_t setSecurityLevel(uint8_t level) 
+{
+  return (writeRegister(FINGERPRINT_SECURITY_REG_ADDR, level));
 }
 /*!
     @brief   Ask the sensor to take an image of the finger pressed on surface
@@ -100,7 +128,8 @@ uint8_t createModel(void)
    to flash memory
     @returns <code>FINGERPRINT_PACKETRECIEVEERR</code> on communication error
 */
-uint8_t storeModel(uint16_t location) {
+uint8_t storeModel(uint16_t location) 
+{
 	SEND_CMD_PACKET(FINGERPRINT_STORE, 0x01, (uint8_t)(location >> 8),(uint8_t)(location & 0xFF));
 }
 /*!
@@ -212,7 +241,7 @@ void SendToUart(fingerprintPacket *packet)
 	}
 	packetData[i++]=(uint8_t)(Sum>>8);
 	packetData[i]=(uint8_t)(Sum & 0xFF);
-    UART_write(packetData, Size);
+	UART_write(uart2_fd,packetData, Size);
 }
 
 //Get packet from FPM
@@ -224,9 +253,9 @@ uint8_t GetFromUart(fingerprintPacket *packet)
 	uint16_t length = 0;
 	int chkSum;
 	SendToUart(packet);
-	sleep(1);
+	usleep(100000);
 	// Check the first data read
-	if(UART_read(pData,MIN_SIZE_PACKET)==0)
+	if(UART_read(uart2_fd,pData,MIN_SIZE_PACKET)==0)
 		return FINGERPRINT_TIMEOUT;
 	// shift a byte 8 bits to the left and then combine it with the next byte
 	length = ((uint16_t)pData[7] << 8) | pData[8];
@@ -235,7 +264,7 @@ uint8_t GetFromUart(fingerprintPacket *packet)
     	return -1;
 
 	// Check the second data read
-	if(UART_read(pData+MIN_SIZE_PACKET,length)==0)
+	if(UART_read(uart2_fd,pData+MIN_SIZE_PACKET,length)==0)
 		return FINGERPRINT_TIMEOUT;
 
 	if ((pData[idx] != (FINGERPRINT_STARTCODE >> 8)) || ((pData[idx+1] != (FINGERPRINT_STARTCODE & 0xFF)))) 
@@ -267,4 +296,15 @@ uint8_t GetFromUart(fingerprintPacket *packet)
 		return FINGERPRINT_BADPACKET;
 	printf("%s", packet->data);
 	return packet->data[0];
+}
+void printParameters() 
+{
+     printf("Device parameters:\n");
+     printf("Status register: 0x%04X\n", parameters.status_reg);
+     printf("System ID code: 0x%04X\n", parameters.system_id);
+     printf("Finger library size: %d\n", parameters.capacity);
+     printf("Security level: %d\n", parameters.security_level);
+     printf("Device address: 0x%08X\n", parameters.device_addr);
+     printf("Data packet size: %d\n", parameters.packet_len);
+     printf("Baud rate: %d\n", parameters.baud_rate);
 }

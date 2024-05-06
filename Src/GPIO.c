@@ -12,8 +12,10 @@ int GPIO_init(int pinNumber, const char* direction)
     {
         // If the folder does not exist, create it
         int export_fd = open("/sys/class/gpio/export", O_WRONLY);
-        if (export_fd == -1) {
-            perror("Error opening GPIO export");
+        if (export_fd == -1) 
+        {
+            syslog_log(LOG_ERR, __func__, "strerror", "Error opening GPIO export", strerror(errno));
+            //perror("Error opening GPIO export");
             return 0;
         }
 
@@ -29,7 +31,8 @@ int GPIO_init(int pinNumber, const char* direction)
     int gpio_fd = open(direction_path, O_WRONLY);
     if (gpio_fd == -1) 
     {
-        perror("Error opening GPIO direction");
+        syslog_log(LOG_ERR, __func__, "strerror", "Error opening GPIO direction", strerror(errno));
+        //perror("Error opening GPIO direction");
         return 0;
     }
 
@@ -44,7 +47,8 @@ int GPIO_read(int gpio_fd)
     char value;
     if (read(gpio_fd, &value, sizeof(value)) == -1)
     {
-        perror("Error reading GPIO value");
+        syslog_log(LOG_ERR, __func__, "strerror", "Error reading GPIO value", strerror(errno));
+        //perror("Error reading GPIO value");
         close(gpio_fd);
         exit(EXIT_FAILURE);
     }
@@ -58,7 +62,8 @@ int GPIO_open(int pinNumber)
     int fd = open(gpioPath, O_RDONLY);
     if (fd == -1) 
     {
-        perror("Error opening GPIO value file");
+        syslog_log(LOG_ERR, __func__, "strerror", "Error opening GPIO value file", strerror(errno));
+        //perror("Error opening GPIO value file");
         exit(EXIT_FAILURE);
     }
     return fd;

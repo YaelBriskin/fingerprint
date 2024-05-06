@@ -48,6 +48,7 @@ int findFinger(const char* message)
 			lcd20x4_i2c_puts(1, 0,"Error when receiving package");
 			break;
 		case FINGERPRINT_NOFINGER:
+			printf("Cant detect finger\r\n");
 			lcd20x4_i2c_puts(1, 0,"Cant detect finger");
 			break;
 		case FINGERPRINT_IMAGEFAIL:
@@ -96,8 +97,9 @@ int findFinger(const char* message)
 		case FINGERPRINT_OK:
 			sprintf(num, "%d", (fingerID[1] | (fingerID[0] << 8)));
 			sprintf(mydata,"%s ID #%s", message,num);
-			lcd20x4_i2c_2ndLine();
-			lcd20x4_i2c_printf(mydata);
+			//lcd20x4_i2c_2ndLine();
+			//lcd20x4_i2c_printf(mydata);
+			lcd20x4_i2c_puts(1, 0,mydata);
 			printf("%s",mydata);
 			return stringToInt(num);
 		case FINGERPRINT_PACKETRECIEVER:
@@ -112,5 +114,4 @@ int findFinger(const char* message)
 		sleep(3);
 		if (ack != FINGERPRINT_OK)
 			return 0;
-			
 }

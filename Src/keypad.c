@@ -1,7 +1,8 @@
 #include "../Inc/keypad.h"
-int uart_fd;
-
 // Function to enter and validate an ID from keypad
+
+extern int uart4_fd;
+
 int enter_ID_keypad()
 {
     char code[MAX_LENGTH_ID + 1] = {'_', '_', '_', '\0'};
@@ -16,7 +17,8 @@ int enter_ID_keypad()
     const clock_t max_execution_time = 30 * CLOCKS_PER_SEC;
     while ((clock() - start_time) <= max_execution_time && attempts < MAX_RETRIES)
     {
-        if (read(uart_fd, &rx_buffer, 1) > 0)
+        if(UART_read(uart4_fd, &rx_buffer, 1)>0)
+        //if (read(uart4_fd, &rx_buffer, 1) > 0)
         {
             char character = convert_to_char(rx_buffer);
             // Handle character input
