@@ -2,45 +2,54 @@
 
 int enrolling(uint16_t pageId)
 {
-
+    lcd20x4_i2c_clear();
+    struct timespec start_time;
+    const int max_execution_time = 60;
+    struct timespec current_time;
     int ack = -1;
-    //showMessageOnDisplay("Waiting finger to enroll", -1);
-
-    clock_t start_time;
-    const clock_t max_execution_time = 30 * CLOCKS_PER_SEC;
-
-    start_time = clock();
-    while (ack != FINGERPRINT_OK && (clock() - start_time) <= max_execution_time)
+    int previous_ack = -1;
+    lcd20x4_i2c_puts(1,0,"Waiting finger to enroll");
+    sleep(2);
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
+    while (ack != FINGERPRINT_OK)
     {
-        ack = (int)getImage();
-        switch (ack)
+        clock_gettime(CLOCK_MONOTONIC, &current_time);
+        long elapsed_time = (current_time.tv_sec - start_time.tv_sec) + (current_time.tv_nsec - start_time.tv_nsec) / 1000000000;
+        if (elapsed_time >= max_execution_time) 
         {
-        case FINGERPRINT_OK:
-            showMessageOnDisplay("Finger collection success", 1, 0);
-            break;
-        case FINGERPRINT_PACKETRECIEVER:
-            showMessageOnDisplay("Error when receiving package", 1, 0);
-            break;
-        case FINGERPRINT_NOFINGER:
-            printf("Can't detect finger\r\n");
-            showMessageOnDisplay("Can't detect finger", 1, 0);
-            break;
-        case FINGERPRINT_IMAGEFAIL:
-            showMessageOnDisplay("Fail to collect finger", 1, 0);
-            break;
-        default:;
+            lcd20x4_i2c_puts(1, 0,"Timeout: One minute has passed.");
+            sleep(2);
+            lcd20x4_i2c_clear();
+            return FINGERPRINT_TIMEOUT;
         }
-    }
-    if ((clock() - start_time) > max_execution_time)
-    {
-        showMessageOnDisplay("Timeout: One minute has passed.",1,0);
-        return FINGERPRINT_TIMEOUT;
+        ack = (int)getImage();
+        if (ack != previous_ack)
+        {
+            lcd20x4_i2c_clear();
+            switch (ack)
+            {
+            case FINGERPRINT_OK:
+                lcd20x4_i2c_puts(1, 0,"Finger collection success");
+                break;
+            case FINGERPRINT_PACKETRECIEVER:
+                lcd20x4_i2c_puts(1, 0,"Error when receiving package");
+                break;
+            case FINGERPRINT_NOFINGER:
+                //printf("Can't detect finger");
+                lcd20x4_i2c_puts(1, 0,"Can't detect finger");
+                break;
+            case FINGERPRINT_IMAGEFAIL:
+                lcd20x4_i2c_puts(1, 0,"Fail to collect finger");
+                break;
+            default:;
+            }
+            previous_ack = ack; // Update previous_ack for next iteration
+        }
     }
     ack = -1;
     while (ack != FINGERPRINT_OK)
     {
         ack = image2Tz(1);
-
         switch (ack)
         {
         case FINGERPRINT_OK:
@@ -60,40 +69,53 @@ int enrolling(uint16_t pageId)
             break;
         }
     }
-    showMessageOnDisplay("Timeout: One minute has passed.",1,0);
-    usleep(300);
-
+    ack = fingerFastSearch();
+    if (ack == FINGERPRINT_OK) 
+    {
+        lcd20x4_i2c_puts(1, 0,"Fingerprint already exists");
+        return -1; 
+    }
     while (getImage() != FINGERPRINT_NOFINGER)
         ;
     ack = FINGERPRINT_NOFINGER;
-    printf("Waiting finger to enroll\r\n ");
-
-    start_time = clock();
-    while (ack != FINGERPRINT_OK && (clock() - start_time) <= max_execution_time)
+    lcd20x4_i2c_puts(1, 0,"Put finger to enroll again");
+    sleep(2);
+    previous_ack = -1;
+    while (ack != FINGERPRINT_OK)
     {
-        ack = getImage();
-        switch (ack)
+        clock_gettime(CLOCK_MONOTONIC, &current_time);
+        long elapsed_time = (current_time.tv_sec - start_time.tv_sec) + (current_time.tv_nsec - start_time.tv_nsec) / 1000000000;
+        if (elapsed_time >= max_execution_time) 
         {
-        case FINGERPRINT_OK:
-            printf("Finger collection success\r\n ");
-            break;
-        case FINGERPRINT_PACKETRECIEVER:
-            printf("Error when receiving package\r\n ");
-            break;
-        case FINGERPRINT_NOFINGER:
-            printf("Can't detect finger\r\n ");
-            break;
-        case FINGERPRINT_IMAGEFAIL:
-            printf("Fail to collect finger\r\n ");
-            break;
-        default:;
+            lcd20x4_i2c_puts(1, 0,"Timeout: One minute has passed.");
+            sleep(3);
+            lcd20x4_i2c_clear();
+            return FINGERPRINT_TIMEOUT;
+        }
+        ack = getImage();
+        if (ack != previous_ack)
+        {
+            lcd20x4_i2c_clear();
+            switch (ack)
+            {
+            case FINGERPRINT_OK:
+                lcd20x4_i2c_puts(1, 0, "Finger collection success");
+                break;
+            case FINGERPRINT_PACKETRECIEVER:
+                lcd20x4_i2c_puts(1, 0, "Error when receiving package");
+                break;
+            case FINGERPRINT_NOFINGER:
+                lcd20x4_i2c_puts(1, 0, "Can't detect finger");
+                break;
+            case FINGERPRINT_IMAGEFAIL:
+                lcd20x4_i2c_puts(1, 0, "Fail to collect finger ");
+                break;
+            default:;
+            }
+            previous_ack = ack; // Update previous_ack for next iteration
         }
     }
-    if ((clock() - start_time) > max_execution_time)
-    {
-        printf("Timeout: One minute has passed.\r\n");
-        return FINGERPRINT_TIMEOUT;
-    }
+    lcd20x4_i2c_clear();
     ack = image2Tz(2);
 
     switch (ack)
@@ -154,5 +176,4 @@ int enrolling(uint16_t pageId)
         printf("Error when writing Flash\r\n ");
         return 0;
     }
-    return 0;
 }

@@ -16,16 +16,13 @@
 #include "../Inc/FP_find_finger.h"
 #include "../Inc/lcd20x4_i2c.h"
 #include "../Inc/keypad.h"
-#include "../Inc/display.h"
+#include "../Inc/curl_client.h"
 
 #define MAX_RETRIES 10
-#define SIZE_TZ 9
 
-extern volatile bool isRunning;
-
-void getCurrentTimeAndDate(char*  dateString , char* timeString);
+int getCurrentUTCTimestamp();
 void* fingerPrintThread(void* arg);
 void* databaseThread(void* arg);
-void* socketThread(void* arg);
-void *displayThread(void *arg);
+void *clockThread(void *arg);
+
 #endif  // THREADS_H

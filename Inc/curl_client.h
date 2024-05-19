@@ -10,6 +10,6 @@
 #define URL "https://st-portal.online/RTG-Reports/api/attendance/fingerprint"
 
 int send_request(const char *post_data);
-int Json_data (const char* tz, const char* event, int timestamp);
-
+int send_json_data (int tz, const char* event, int timestamp, const char* fpm);
+int send_json_new_employee (int id);
 #endif 

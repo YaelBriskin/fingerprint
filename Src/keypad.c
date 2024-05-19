@@ -3,23 +3,49 @@
 
 extern int uart4_fd;
 
-int enter_ID_keypad()
+char code[MAX_LENGTH_ID + 1] = {'_', '_', '_', '\0'};
+void beginDisplay()
 {
-    char code[MAX_LENGTH_ID + 1] = {'_', '_', '_', '\0'};
+    lcd20x4_i2c_clear();
+    // Заполнение массива code символами '_'
+    for (int i = 0; i < MAX_LENGTH_ID; i++) {
+        code[i] = '_';
+    }
+    // Добавление нулевого символа в конец строки для обозначения конца
+    code[MAX_LENGTH_ID] = '\0';
     lcd20x4_i2c_print(0, 0, "Enter ID: ");
     lcd20x4_i2c_print(1, 9, code);
-    lcd20x4_i2c_print(3, 0, "* delete, # confirm");
+    lcd20x4_i2c_print(3, 0, "* delete  # confirm");
+    
+}
+int enter_ID_keypad()
+{
+    beginDisplay();
+    struct timespec start_time;
+    const int max_execution_time = 60;
+    struct timespec current_time;
+
     uint8_t rx_buffer;
     int digit_count = 0;
     int attempts = 0;
     // we'll wait half a minute
-    clock_t start_time = clock();
-    const clock_t max_execution_time = 30 * CLOCKS_PER_SEC;
-    while ((clock() - start_time) <= max_execution_time && attempts < MAX_RETRIES)
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
+
+    while (1)
     {
+        clock_gettime(CLOCK_MONOTONIC, &current_time);
+        long elapsed_time = (current_time.tv_sec - start_time.tv_sec) + (current_time.tv_nsec - start_time.tv_nsec) / 1000000000;
+        if (elapsed_time >= max_execution_time) 
+        {
+            lcd20x4_i2c_puts(1, 0,"Timeout: One minute has passed.");
+            sleep(3);
+            lcd20x4_i2c_clear();
+            return -1;
+        }
         if(UART_read(uart4_fd, &rx_buffer, 1)>0)
         //if (read(uart4_fd, &rx_buffer, 1) > 0)
         {
+           // printf("rx_buffer= %u",(unsigned int)rx_buffer);
             char character = convert_to_char(rx_buffer);
             // Handle character input
             if (character != '\0')
@@ -34,22 +60,25 @@ int enter_ID_keypad()
                 }
                 else if (character == '*' && digit_count > 0)
                 {
-                    code[digit_count] = '_';
+                    code[--digit_count] = '_';
                     // Update LCD display
                     lcd20x4_i2c_print(1, 9, code);
-                    digit_count--; // Delete the last entered digit
+                    // Delete the last entered digit
                 }
                 else if (character == '#')
                 {
                     if (digit_count == MAX_LENGTH_ID)
                     {
+                        lcd20x4_i2c_clear();
                         code[digit_count] = '\0';
-                        return atoi(code);
+                        int id=atoi(code);
+                        return id;
                     }
                     else
                     {
                         lcd20x4_i2c_puts(0, 0, "Invalid ID length. Please enter the code again.");
                         attempts++;
+                        beginDisplay();
                     }
                     digit_count = 0; // Reset the digit counter
                 }
@@ -59,11 +88,6 @@ int enter_ID_keypad()
 
             usleep(100000);
             fflush(stdout);
-        }
-        if ((clock() - start_time) > max_execution_time)
-        {
-            lcd20x4_i2c_puts(0, 0, "Timeout: One minute has passed.");
-            return -1;
         }
     }
 }

@@ -6,7 +6,7 @@ pthread_mutex_t databaseMutex;
 int getNextAvailableID() 
 {
     int id = 0;
-    char *query = "SELECT seq FROM sqlite_sequence WHERE name = 'attendance'";
+    char *query = "SELECT seq FROM sqlite_sequence WHERE name = 'employees'";
     sqlite3_stmt *stmt;
 
     if (sqlite3_prepare_v2(db_attendance, query, -1, &stmt, NULL) != SQLITE_OK) 
@@ -26,75 +26,104 @@ int getNextAvailableID()
 void DB_open()
 {
     const char *db_name = "employee_attendance.db";
-    char *err_msg = 0;
+    char *err_msg = NULL;
+    int result;
 
     // Open a connection to the "attendance" database
-    int result = sqlite3_open(db_name, &db_attendance);
+    result = sqlite3_open(db_name, &db_attendance);
     if (result != SQLITE_OK)
     {
-        //fprintf(stderr, "Failed to open attendance database: %s\n", sqlite3_errmsg(db_attendance));
         syslog_log(LOG_ERR, __func__, "format", "Failed to open attendance database: %s (SQLite error code: %d)", sqlite3_errmsg(db_attendance), result);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     // Open a connection to the database (if there is no database, it will be created automatically)
-    char *sql = "CREATE TABLE IF NOT EXISTS attendance ("
-                "ID INTEGER PRIMARY KEY AUTOINCREMENT,"
-                "Date DATE NOT NULL,"
-                "Time TIME NOT NULL,"
-                "Direction TEXT NOT NULL,"
-                "Saved TEXT DEFAULT 'X' NOT NULL,"
-                "FPM TEXT NOT NULL"
-                ");";
+    const char *create_attendance_table_query = "CREATE TABLE IF NOT EXISTS attendance ("
+                                                "ID INTEGER,"
+                                                "Timestamp INTEGER NOT NULL,"
+                                                "Direction TEXT NOT NULL,"
+                                                "Saved TEXT DEFAULT 'X' NOT NULL,"
+                                                "FPM INTEGER NOT NULL,"
+                                                "FOREIGN KEY(ID) REFERENCES employees(ID));";
 
-    result = sqlite3_exec(db_attendance, sql, 0, 0, &err_msg);
+    result = sqlite3_exec(db_attendance, create_attendance_table_query, 0, 0, &err_msg);
     if (result != SQLITE_OK)
     {
         syslog_log(LOG_ERR, __func__, "format", "Failed to create table: %s", err_msg);
         //fprintf(stderr, "Failed to create table: %s\n", err_msg);
         sqlite3_free(err_msg);
-        exit(1);
+        exit(EXIT_FAILURE);
+    }
+    const char *create_employees_table_query = "CREATE TABLE IF NOT EXISTS employees ("
+                                               "ID INTEGER PRIMARY KEY AUTOINCREMENT);";
+
+    result = sqlite3_exec(db_attendance, create_employees_table_query, 0, 0, &err_msg);
+    if (result != SQLITE_OK) 
+    {
+        syslog(LOG_ERR, "Failed to create employees table: %s", err_msg);
+        sqlite3_free(err_msg);
+        exit(EXIT_FAILURE);
     }
     // Initialize the mutex
     if (pthread_mutex_init(&databaseMutex, NULL) != 0)
     {
         syslog_log(LOG_ERR, __func__, "stderr", "Failed to initialize mutex", NULL);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 }
-
-void DB_write(int ID, const char *date, const char *time, const char *direction,const char *FPM)
+void DB_newEmployee()
+{
+    printf("DB_newEmployee()\r\n");
+    if (pthread_mutex_lock(&databaseMutex) == 0)
+    {
+        sqlite3_stmt *stmt;
+        const char *sql = "INSERT INTO employees DEFAULT VALUES;";
+        if (sqlite3_prepare_v2(db_attendance, sql, -1, &stmt, NULL) != SQLITE_OK)
+        {
+            syslog(LOG_ERR, "Failed to prepare statement: %s", sqlite3_errmsg(db_attendance));
+            return;
+        }
+        if (sqlite3_step(stmt) != SQLITE_DONE)
+            syslog(LOG_ERR, "Failed to insert new employee: %s", sqlite3_errmsg(db_attendance));
+        // Finish the request
+        sqlite3_finalize(stmt);
+    }
+    // Release the mutex after performing operations
+    pthread_mutex_unlock(&databaseMutex);
+}
+int DB_write(int ID, int Timestamp, const char *direction,const char *FPM)
 {
     // Obtain the mutex before accessing the database
     if (pthread_mutex_lock(&databaseMutex) == 0)
     {
         sqlite3_stmt *stmt;
         // SQL query to insert data into the table
-        const char *sql = "INSERT INTO attendance (ID, Date, Time, Direction, FPM) VALUES (?, ?, ?, ?, ?);";
+        const char *sql = "INSERT INTO attendance (ID, Timestamp, Direction, FPM) VALUES (?, ?, ?, ?);";
         // Prepare the request
         if (sqlite3_prepare_v2(db_attendance, sql, -1, &stmt, NULL) != SQLITE_OK)
         {
             syslog_log(LOG_ERR, __func__, "format", "Failed to prepare request: %s",sqlite3_errmsg(db_attendance));
             //fprintf(stderr, "Failed to prepare request: %s\n", sqlite3_errmsg(db_attendance));
-            exit(1);
-        }
+            pthread_mutex_unlock(&databaseMutex);
+            return 0;         
+            }
         // Binding values to request parameters
         sqlite3_bind_int(stmt, 1, ID);
-        sqlite3_bind_text(stmt, 2, date, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 3, time, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 4, direction, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 5, FPM, -1, SQLITE_STATIC); 
+        sqlite3_bind_int(stmt, 2, Timestamp);
+        sqlite3_bind_text(stmt, 3, direction, -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 4, FPM, -1, SQLITE_STATIC); 
         // Execute the request
         if (sqlite3_step(stmt) != SQLITE_DONE)
         {
             syslog_log(LOG_ERR, __func__, "format", "The request failed: %s",sqlite3_errmsg(db_attendance));
             //fprintf(stderr, "The request failed: %s\n", sqlite3_errmsg(db_attendance));
-            exit(1);
+            return 0;
         }
         // Finish the request
         sqlite3_finalize(stmt);
         // Release the mutex after performing operations
         pthread_mutex_unlock(&databaseMutex);
+        return 1;
     }
 }
 
@@ -115,7 +144,7 @@ void DB_find()
     // Obtain the mutex before accessing the database
     if (pthread_mutex_lock(&databaseMutex) == 0)
     {
-        char *query = "SELECT ID, Date, Time, Direction, FPM "
+        char *query = "SELECT ID, Timestamp, Direction, FPM "
                       "FROM attendance "
                       "WHERE Saved = 'X';";
         sqlite3_stmt *stmt;
@@ -124,29 +153,24 @@ void DB_find()
         {
             syslog_log(LOG_ERR, __func__, "format", "Failed to prepare request: %s",sqlite3_errmsg(db_attendance));
             //fprintf(stderr, "Failed to prepare request: %s\n", sqlite3_errmsg(db_attendance));
+            pthread_mutex_unlock(&databaseMutex);
             return;
         }
         // Processing query results
+        printf("before send_json_data()\r\n");
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            char https_request[1024];
             int id = sqlite3_column_int(stmt, 0);
-            const char *date = (const char *)sqlite3_column_text(stmt, 1);
-            const char *time = (const char *)sqlite3_column_text(stmt, 2);
-            const char *direction = (const char *)sqlite3_column_text(stmt, 3);
-            const char *FPM = (const char *)sqlite3_column_text(stmt, 4);
+            int timestamp = sqlite3_column_int(stmt, 1);
+            const char *direction = (const char *)sqlite3_column_text(stmt, 2);
+            const char *FPM =(const char *)sqlite3_column_text(stmt, 3);
 
             // HTTP request
-            sprintf(https_request, "id=%d&date=%s&time=%s&direction=%s&FPM=%s", id, date, time, direction, FPM);
-            if (send_request(https_request))
-            {
-                // HTTP request sent successfully
-                printf("Data sent to the server: %d, %s, %s, %s, %s\n",id , date, time, direction, FPM);
+            printf("before send_json_data()\r\n");
+            if(send_json_data(id,direction,timestamp,FPM))
                 DB_update(id);
-            }
             else
-                syslog_log(LOG_ERR, __func__, "stderr", "Error sending HTTP request", NULL);
-                //printf("Error sending HTTP request\r\n");
+               syslog_log(LOG_ERR, __func__, "stderr", "Error sending HTTP request", NULL);
         }
         // Finish the request
         sqlite3_finalize(stmt);
@@ -167,6 +191,4 @@ void DB_update(int id)
         //fprintf(stderr, "Failed to update data in the database: %s\n", err_msg);
         sqlite3_free(err_msg);
     }
-    else
-        printf("Data in the database updated: Set 'Saved' to 'V' for ID=%d\n", id);
 }

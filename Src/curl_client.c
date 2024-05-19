@@ -2,6 +2,7 @@
 
 int send_request(const char *post_data) 
 {
+    printf("%s\r\n",post_data);
     CURL *curl;
     CURLcode res;
     int result = 0;
@@ -25,7 +26,7 @@ int send_request(const char *post_data)
         res = curl_easy_perform(curl);
         // Check the server response status code
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-        printf("Response code: %ld\n", response_code);
+        printf("\r\nResponse code: %ld\n", response_code);
         // Check the success of the request
         if (res != CURLE_OK) 
         {
@@ -33,8 +34,7 @@ int send_request(const char *post_data)
             //fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
             result = 1; 
         }
-        else
-            printf("Data successfully sent to the server!\n");
+
         // Release resources
         curl_easy_cleanup(curl);
         curl_slist_free_all(headers);
@@ -45,15 +45,16 @@ int send_request(const char *post_data)
     return result;
 }
 
-int Json_data (const char* tz, const char* event, int timestamp)
+int send_json_data (int id, const char* event, int timestamp, const char* fpm)
 {   
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "tz", tz);
-    cJSON_AddStringToObject(root, "event",event);
+    cJSON_AddNumberToObject(root, "tz", id);
+    cJSON_AddStringToObject(root, "event",event); //"out" or "in" 
     cJSON_AddNumberToObject(root, "timestamp", timestamp);
-
+    cJSON_AddStringToObject(root, "fpm", fpm);  //'X' or 'V' 
+    //if 'V' it means the employee registered using the fingerprint module if 'X' means using the keypad
     char *json_data = cJSON_Print(root);
-
+    printf("json_data= %s",json_data);
     int result = send_request(json_data);
     cJSON_Delete(root);
     free(json_data);
@@ -61,7 +62,24 @@ int Json_data (const char* tz, const char* event, int timestamp)
     if (result != 0)
     {
         fprintf(stderr, "Failed to send request.\n");
-        return 1;
+        return 0;
     }
-    return 0;
+    return 1;
+}
+int send_json_new_employee (int id)
+{   
+    cJSON *root = cJSON_CreateObject();
+    cJSON_AddNumberToObject(root, "tz", id);
+    //if 'V' it means the employee registered using the fingerprint module if 'X' means using the keypad
+    char *json_data = cJSON_Print(root);
+    printf("json_data= %s",json_data);
+    int result = send_request(json_data);
+    cJSON_Delete(root);
+    free(json_data);
+    if (result != 0)
+    {
+        fprintf(stderr, "Failed to send request.\n");
+        return 0;
+    }
+    return 1;
 }

@@ -23,7 +23,6 @@
 int UART_Init(const char* device, speed_t UART_BaudRate);
 void UART_write(int uart_fd,const char* data, int size);
 int UART_read(int uart_fd,char* buffer, int size);
-void UART_close(int uart_fd)
-;
+void UART_close(int uart_fd);
 
 #endif 

@@ -6,7 +6,6 @@ int UART_Init(const char* UART_DEVICE, speed_t UART_BaudRate)
     if (uart_fd == -1)
     {
         syslog_log(LOG_ERR, __func__, "strerror", "Error opening UART", strerror(errno));
-        perror("Error opening UART");
         return 0;
     }
     struct termios options;

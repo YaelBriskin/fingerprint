@@ -180,7 +180,7 @@ void lcd20x4_i2c_puts(uint8_t x, uint8_t y, const char *str)
         currentY = 0;
         currentX++;
         lcd20x4_i2c_setCursor(currentX, currentY);
-        //usleep(10);
+        usleep(100);
       }
       wordStartX = currentY;
     }
@@ -193,7 +193,7 @@ void lcd20x4_i2c_puts(uint8_t x, uint8_t y, const char *str)
         wordStartX = 0;
         currentX++;
         lcd20x4_i2c_setCursor(currentX, currentY);
-        //usleep(10);
+        usleep(100);
       }
       //
       for (int j = 0; j < wordLen; j++)

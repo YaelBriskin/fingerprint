@@ -10,7 +10,8 @@
 
 
 void DB_open();
-void DB_write(int ID, const char *date, const char *time, const char *direction,const char *FPM);
+void DB_newEmployee();
+int DB_write(int ID, int Timestamp, const char *direction,const char *FPM);
 void DB_close();
 void DB_find();
 void DB_update(int id);
