@@ -29,6 +29,7 @@ void *fingerPrintThread(void *arg)
         // press button
         if (!GPIO_read(button_fd_in)) // press button IN
         {
+            printf("button in pressed\r\n");
             pthread_mutex_lock(&displayMutex);
             displayLocked = 1;
             int id = findFinger("Hello");
@@ -66,6 +67,7 @@ void *fingerPrintThread(void *arg)
         }
         if (!GPIO_read(button_fd_out)) // press button OUT
         {
+            printf("button out pressed\r\n");
             pthread_mutex_lock(&displayMutex);
             displayLocked = 1;            
             int id = findFinger("Goodbye");
@@ -103,6 +105,7 @@ void *fingerPrintThread(void *arg)
         }
         if (!GPIO_read(button_fd_new)) // press button NEW (new employee)
         {
+            printf("button new pressed\r\n");
             int id = getNextAvailableID();
             printf("id =%d",id);
             pthread_mutex_lock(&displayMutex);
@@ -115,7 +118,8 @@ void *fingerPrintThread(void *arg)
                 sprintf(messageString, "Employee %d added successfully.", id);
                 printf("%s\r\n",messageString);
                 lcd20x4_i2c_puts(0,0,messageString);
-                send_json_new_employee (id);
+                timestamp = getCurrentUTCTimestamp();
+                send_json_new_employee (id,timestamp);
                 sleep(3);
             }
             else

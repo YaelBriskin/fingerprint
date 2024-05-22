@@ -9,13 +9,13 @@ void deleteModel(uint16_t id_N)
 	switch (ack)
 	{
 	case FINGERPRINT_OK:
-		lcd20x4_i2c_puts(1, 0, "Delete success");
+		printf("Delete success\r\n");
 		break;
 	case FINGERPRINT_PACKETRECIEVER:
-		lcd20x4_i2c_puts(1, 0, "Error when receiving package");
+		printf("Error when receiving package\r\n");
 		break;
 	case FINGERPRINT_DELETEFAIL:
-		lcd20x4_i2c_puts(1, 0, "Faile to delete templates");
+		printf("Faile to delete templates\r\n");
 		break;
 	default:;
 	}

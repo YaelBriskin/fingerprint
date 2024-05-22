@@ -157,7 +157,6 @@ void DB_find()
             return;
         }
         // Processing query results
-        printf("before send_json_data()\r\n");
         while (sqlite3_step(stmt) == SQLITE_ROW)
         {
             int id = sqlite3_column_int(stmt, 0);
@@ -166,7 +165,6 @@ void DB_find()
             const char *FPM =(const char *)sqlite3_column_text(stmt, 3);
 
             // HTTP request
-            printf("before send_json_data()\r\n");
             if(send_json_data(id,direction,timestamp,FPM))
                 DB_update(id);
             else
@@ -190,5 +188,41 @@ void DB_update(int id)
         syslog_log(LOG_ERR, __func__, "format", "Failed to update data in the database: %s", err_msg);
         //fprintf(stderr, "Failed to update data in the database: %s\n", err_msg);
         sqlite3_free(err_msg);
+    }
+}
+void DB_delete(int ID)
+{
+    if (pthread_mutex_lock(&databaseMutex) == 0) 
+    {
+        // char deleteQuery[256];
+        // Create SQL query for deletion
+       // snprintf(deleteQuery, sizeof(deleteQuery), "DELETE FROM employees WHERE ID = %d;", ID);
+        char *sql_query = NULL;
+        // Create SQL query for deletion
+        asprintf(&sql_query, "DELETE FROM employees WHERE ID = %d;", ID);
+        if (!sql_query) {
+            syslog_log(LOG_ERR, __func__, "format", "Memory allocation error");
+            return;
+        }
+
+        sqlite3_stmt *stmt;
+
+        if (sqlite3_prepare_v2(db_attendance, sql_query, -1, &stmt, NULL) != SQLITE_OK) {
+            syslog_log(LOG_ERR, __func__, "format", "Failed to prepare request: %s", sqlite3_errmsg(db_attendance));
+            sqlite3_free(sql_query);  // Free allocated memory
+            return;                 // Return error code
+        }
+
+        // Execute the prepared statement
+        if (sqlite3_step(stmt) != SQLITE_DONE) {
+            syslog_log(LOG_ERR, __func__, "format", "Failed to delete record: %s", sqlite3_errmsg(db_attendance));
+            sqlite3_finalize(stmt);
+            sqlite3_free(sql_query);
+            return;
+        }
+
+        sqlite3_finalize(stmt);
+        sqlite3_free(sql_query);
+        pthread_mutex_unlock(&databaseMutex);
     }
 }

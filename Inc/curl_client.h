@@ -11,5 +11,5 @@
 
 int send_request(const char *post_data);
 int send_json_data (int tz, const char* event, int timestamp, const char* fpm);
-int send_json_new_employee (int id);
+int send_json_new_employee (int id, int timestamp);
 #endif 
