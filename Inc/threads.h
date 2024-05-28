@@ -17,12 +17,18 @@
 #include "../Inc/lcd20x4_i2c.h"
 #include "../Inc/keypad.h"
 #include "../Inc/curl_client.h"
+#include "../Inc/tcp_server_socket.h"
 
 #define MAX_RETRIES 10
 
-int getCurrentUTCTimestamp();
+int getCurrent_UTC_Timestamp();
+void buzzer();
 void* fingerPrintThread(void* arg);
 void* databaseThread(void* arg);
 void *clockThread(void *arg);
+void *resetDatabaseThread(void *arg);
+void *handle_clientThread(void *arg);
+void *socket_serverThread (void *arg);
+
 
 #endif  // THREADS_H

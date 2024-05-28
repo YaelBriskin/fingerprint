@@ -1,4 +1,6 @@
 #include "../Inc/packet.h"
+
+// Protocol description
 /*
 protocol[][][]...
 	Header   |  Adder   |  Package     |  Package  |  Package content             |  Checksum
@@ -12,7 +14,9 @@ uint8_t getTempCount[7] = "getT\n";
 ReadSysPara parameters;
 extern int uart2_fd;
 
-//Gets the command packet
+/*!
+ * @brief Gets the command packet
+ */
 #define GET_CMD_PACKET(...) \
 	uint8_t Data[] = {__VA_ARGS__}; \
 	fingerprintPacket packet;\
@@ -38,16 +42,29 @@ extern int uart2_fd;
 	ack=GetFromUart(&packet);\
 	if(ack!=FINGERPRINT_OK)return ack;\
 
-//Sends the command packet 
+/*!
+ * @brief Sends the command packet
+ */
 #define SEND_CMD_PACKET(...)           \
   GET_CMD_PACKET(__VA_ARGS__);         \
   return packet.data[0];
-//Confirm that communicate is connect between  module  and  upper monitor
+/**************************************************************************/
+/*!
+ * @brief Confirms that communication is established between the module and upper monitor
+ */
+ /**************************************************************************/
 uint8_t communicate_link(void)
 {
 	SEND_CMD_PACKET(FINGERPRINT_HANDSHAKE, FINGERPRINT_CONTROLCODE);
 }
-
+/**************************************************************************/
+/*!
+    @brief  Get the sensors parameters, fills in the member variables
+    status_reg, system_id, capacity, security_level, device_addr, packet_len
+    and baud_rate
+    @returns True if password is correct
+*/
+/**************************************************************************/
 uint8_t getParameters(void) 
 {
   GET_CMD_PACKET(FINGERPRINT_READSYSPARAM);
@@ -73,14 +90,33 @@ uint8_t getParameters(void)
 
   return packet.data[0];
 }
+/**************************************************************************/
+/*!
+    @brief   Writing module registers
+    @param   regAdd 8-bit address of register
+    @param   value 8-bit value will write to register
+    @returns <code>FINGERPRINT_OK</code> on success
+    @returns <code>FINGERPRINT_PACKETRECIEVEERR</code> on communication error
+    @returns <code>FINGERPRINT_ADDRESS_ERROR</code> on register address error
+*/
+/**************************************************************************/
 uint8_t writeRegister(uint8_t regAdd, uint8_t value) 
 {
   	SEND_CMD_PACKET(FINGERPRINT_WRITE_REG, regAdd, value);
 }
+/**************************************************************************/
+/*!
+    @brief   Change security level
+    @param   level 8-bit security level
+    @returns <code>FINGERPRINT_OK</code> on success
+    @returns <code>FINGERPRINT_PACKETRECIEVEERR</code> on communication error
+*/
+/**************************************************************************/
 uint8_t setSecurityLevel(uint8_t level) 
 {
   return (writeRegister(FINGERPRINT_SECURITY_REG_ADDR, level));
 }
+/**************************************************************************/
 /*!
     @brief   Ask the sensor to take an image of the finger pressed on surface
     @returns <code>FINGERPRINT_OK</code> on success
@@ -88,10 +124,12 @@ uint8_t setSecurityLevel(uint8_t level)
     @returns <code>FINGERPRINT_PACKETRECIEVEERR</code> on communication error
     @returns <code>FINGERPRINT_IMAGEFAIL</code> on imaging error
 */
+/**************************************************************************/
 uint8_t getImage(void)
 {
 	SEND_CMD_PACKET(FINGERPRINT_GETIMAGE);
 }
+/**************************************************************************/
 /*!
     @brief   Ask the sensor to convert image to feature template
     @param slot Location to place feature template (put one in 1 and another in
@@ -104,10 +142,12 @@ uint8_t getImage(void)
     @returns <code>FINGERPRINT_INVALIDIMAGE</code> on failure to identify
    fingerprint features
 */
+/**************************************************************************/
 uint8_t image2Tz(uint8_t slot)
 {
 	SEND_CMD_PACKET(FINGERPRINT_IMAGE2TZ, slot);
 }
+/**************************************************************************/
 /*!
     @brief   Ask the sensor to take two print feature template and create a
    model
@@ -115,10 +155,12 @@ uint8_t image2Tz(uint8_t slot)
     @returns <code>FINGERPRINT_PACKETRECIEVEERR</code> on communication error
     @returns <code>FINGERPRINT_ENROLLMISMATCH</code> on mismatch of fingerprints
 */
+/**************************************************************************/
 uint8_t createModel(void)
 {
 	SEND_CMD_PACKET(FINGERPRINT_REGMODEL)
 }
+/**************************************************************************/
 /*!
     @brief   Ask the sensor to store the calculated model for later matching
     @param   location The model location #
@@ -128,10 +170,12 @@ uint8_t createModel(void)
    to flash memory
     @returns <code>FINGERPRINT_PACKETRECIEVEERR</code> on communication error
 */
+/**************************************************************************/
 uint8_t storeModel(uint16_t location) 
 {
 	SEND_CMD_PACKET(FINGERPRINT_STORE, 0x01, (uint8_t)(location >> 8),(uint8_t)(location & 0xFF));
 }
+/**************************************************************************/
 /*!
     @brief   Ask the sensor to load a fingerprint model from flash into buffer 1
     @param   location The model location #
@@ -139,20 +183,24 @@ uint8_t storeModel(uint16_t location)
     @returns <code>FINGERPRINT_BADLOCATION</code> if the location is invalid
     @returns <code>FINGERPRINT_PACKETRECIEVEERR</code> on communication error
 */
+/**************************************************************************/
 uint8_t loadModel(uint16_t location)
 {
 	SEND_CMD_PACKET(FINGERPRINT_LOAD, 0x01, (uint8_t)(location >> 8),(uint8_t)(location & 0xFF));
 }
+/**************************************************************************/
 /*!
     @brief   Ask the sensor to transfer 256-byte fingerprint template from the
    buffer to the UART
     @returns <code>FINGERPRINT_OK</code> on success
     @returns <code>FINGERPRINT_PACKETRECIEVEERR</code> on communication error
 */
+/**************************************************************************/
 uint8_t getModel(void)
 {
 	SEND_CMD_PACKET(FINGERPRINT_UPLOAD, 0x01);
 }
+/**************************************************************************/
 /*!
     @brief   Ask the sensor to delete a model in memory
     @param   location The model location #
@@ -162,10 +210,12 @@ uint8_t getModel(void)
    to flash memory
     @returns <code>FINGERPRINT_PACKETRECIEVEERR</code> on communication error
 */
+/**************************************************************************/
 uint8_t deleteTemplate(uint16_t location)
 {
 	SEND_CMD_PACKET(FINGERPRINT_DELETE, (uint8_t)(location >> 8),(uint8_t)(location & 0xFF), 0x00, 0x01);
 }
+/**************************************************************************/
 /*!
     @brief   Ask the sensor to delete ALL models in memory
     @returns <code>FINGERPRINT_OK</code> on success
@@ -174,10 +224,12 @@ uint8_t deleteTemplate(uint16_t location)
    to flash memory
     @returns <code>FINGERPRINT_PACKETRECIEVEERR</code> on communication error
 */
+/**************************************************************************/
 uint8_t emptyDatabase(void)
 {
 	SEND_CMD_PACKET(FINGERPRINT_EMPTY);
 }
+/**************************************************************************/
 /*!
     @brief   Ask the sensor to search the current slot 1 fingerprint features to
    match saved templates. The matching location is stored in <b>fingerID</b> and
@@ -186,6 +238,7 @@ uint8_t emptyDatabase(void)
     @returns <code>FINGERPRINT_NOTFOUND</code> no match made
     @returns <code>FINGERPRINT_PACKETRECIEVEERR</code> on communication error
 */
+/**************************************************************************/
 uint8_t fingerFastSearch(void)
 {
 	GET_CMD_PACKET(FINGERPRINT_SEARCH, 0x01, 0x00, 0x00, 0x00, 0xA3)
@@ -199,12 +252,14 @@ uint8_t fingerFastSearch(void)
 
 	return packet.data[0];
 }
+/**************************************************************************/
 /*!
     @brief   Ask the sensor for the number of templates stored in memory. The
    number is stored in <b>templateCount</b> on success.
     @returns <code>FINGERPRINT_OK</code> on success
     @returns <code>FINGERPRINT_PACKETRECIEVEERR</code> on communication error
 */
+/**************************************************************************/
 uint8_t getTemplateCount(void) {
 	GET_CMD_PACKET(FINGERPRINT_TEMPLATECOUNT);
 
@@ -214,6 +269,12 @@ uint8_t getTemplateCount(void) {
 
 	return packet.data[0];
 }
+/**************************************************************************/
+/*!
+ * @brief Sends a packet to the sensor over UART
+ * @param packet Pointer to the packet to send
+ */
+ /**************************************************************************/
 void SendToUart(fingerprintPacket *packet)
 {
 	uint16_t Size= MIN_SIZE_PACKET + (packet->length);
@@ -243,9 +304,14 @@ void SendToUart(fingerprintPacket *packet)
 	packetData[i]=(uint8_t)(Sum & 0xFF);
 	UART_write(uart2_fd,packetData, Size);
 }
-
-//Get packet from FPM
-uint8_t GetFromUart(fingerprintPacket *packet)
+/**************************************************************************/
+/*!
+ * @brief Receives a packet from the sensor over UART
+ * @param packet Pointer to the packet to receive
+ * @returns Response code from the sensor
+ */
+ /**************************************************************************/
+ uint8_t GetFromUart(fingerprintPacket *packet)
 {
 	uint8_t pData[SIZE]={0};
 	int count_received_data=0;
@@ -297,6 +363,11 @@ uint8_t GetFromUart(fingerprintPacket *packet)
 	printf("%s", packet->data);
 	return packet->data[0];
 }
+/**************************************************************************/
+/*!
+ * @brief Prints the sensor's parameters
+ */
+ /**************************************************************************/
 void printParameters() 
 {
      printf("Device parameters:\n");

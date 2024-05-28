@@ -1,7 +1,8 @@
 #include "../Inc/syslog_util.h"
 
-#define LOG_FACILITY LOG_LOCAL0
-
+/**
+ * @brief Initializes the syslog facility for logging.
+ */
 void syslog_init()
 {
     extern const char *__progname;
@@ -9,6 +10,15 @@ void syslog_init()
     openlog(__progname, LOG_PID | LOG_CONS, LOG_FACILITY);
 }
 
+/**
+ * @brief Logs a message to the syslog with a specified priority and message type.
+ *
+ * @param priority The priority level of the log message.
+ * @param function_name The name of the function generating the log message.
+ * @param message_type The type of the message (format, stderr, strerror).
+ * @param message The message to log, which may include format specifiers.
+ * @param ... Additional arguments for the format specifiers in the message.
+ */
 void syslog_log(int priority, const char *function_name, const char *message_type, const char *message, ...)
 {
     va_list ap;
@@ -28,29 +38,19 @@ void syslog_log(int priority, const char *function_name, const char *message_typ
     }
     else if (strcmp(message_type, "stderr") == 0)
     {
-        // Копируем сообщение из stderr
+        // Copy message from stderr
         message_len = snprintf(log_message, sizeof(log_message), "[%s] %s", function_name, message);
     }
     else if (strcmp(message_type, "strerror") == 0)
     {
-        // Форматируем сообщение с описанием ошибки errno
+        // Format message with error description from errno
         const char *error_desc = va_arg(ap, const char*);
         message_len = snprintf(log_message, sizeof(log_message), "[%s] %s: %s", function_name, message, error_desc);
     }
 
     if (message_len >= 0 && message_len < sizeof(log_message))
-    {
-        // // Append stderr message if provided
-        // if (stderr_message != NULL)
-        // {
-        //     strncat(log_message, "\n", sizeof(log_message) - message_len - 1);
-        //     strncat(log_message, stderr_message, sizeof(log_message) - message_len - 2);
-        // }
 
-        // // Log the formatted message
-        // vsyslog(priority, log_message);
         syslog(priority, "%s", log_message); 
-    }
     else
         // Handle potential buffer overflow
         syslog(LOG_ERR, "[%s] Error: Message buffer overflow.", function_name);
@@ -58,6 +58,9 @@ void syslog_log(int priority, const char *function_name, const char *message_typ
     va_end(ap);
 }
 
+/**
+ * @brief Closes the syslog facility.
+ */
 void syslog_close()
 {
     closelog();

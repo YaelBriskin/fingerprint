@@ -1,6 +1,14 @@
 #include "../Inc/FP_delete.h"
 #include <stdint.h>
 
+/**
+ * @brief Deletes a fingerprint template with the specified ID.
+ *
+ * This function deletes a fingerprint template stored in the fingerprint module
+ * with the given ID.
+ *
+ * @param id_N The ID of the fingerprint template to be deleted.
+ */
 void deleteModel(uint16_t id_N)
 {
 	lcd20x4_i2c_clear();

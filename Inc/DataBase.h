@@ -14,9 +14,10 @@ void DB_open();
 void DB_newEmployee();
 int DB_write(int ID, int Timestamp, const char *direction,const char *FPM);
 void DB_close();
-void DB_find();
+int DB_find();
 void DB_update(int id);
 void DB_delete(int ID);
+void DB_delete_old_records(time_t lastDay);
 int getNextAvailableID();
 
 #endif  // DATABASE_H

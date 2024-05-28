@@ -15,7 +15,7 @@
 
 #define SERVER_PORT 8080
 
-int create_socket();
-int read_data_from_client(int client_socket);
+int create_server_socket();
+int read_data_from_client(int client_socket, int *client_id);
 
 #endif 

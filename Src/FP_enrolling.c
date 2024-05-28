@@ -1,5 +1,15 @@
 #include "../Inc/FP_enrolling.h"
 
+/**
+ * @brief Initiates the process of enrolling a new fingerprint template.
+ *
+ * This function initiates the process of enrolling a new fingerprint template
+ * by guiding the user through the necessary steps, such as placing their finger
+ * on the fingerprint sensor and capturing the fingerprint image.
+ *
+ * @param pageId The page ID where the enrolled template will be stored.
+ * @return int Returns 1 if the enrollment process is successful, otherwise returns an error code.
+ */
 int enrolling(uint16_t pageId)
 {
     lcd20x4_i2c_clear();
@@ -8,11 +18,16 @@ int enrolling(uint16_t pageId)
     struct timespec current_time;
     int ack = -1;
     int previous_ack = -1;
+
+    // Display initial message
     lcd20x4_i2c_puts(1,0,"Waiting finger to enroll");
     sleep(2);
+    // Start timer
     clock_gettime(CLOCK_MONOTONIC, &start_time);
+    // Loop until fingerprint enrollment is complete or timeout occurs
     while (ack != FINGERPRINT_OK)
     {
+        // Check timeout
         clock_gettime(CLOCK_MONOTONIC, &current_time);
         long elapsed_time = (current_time.tv_sec - start_time.tv_sec) + (current_time.tv_nsec - start_time.tv_nsec) / 1000000000;
         if (elapsed_time >= max_execution_time) 
@@ -22,7 +37,9 @@ int enrolling(uint16_t pageId)
             lcd20x4_i2c_clear();
             return FINGERPRINT_TIMEOUT;
         }
+        // Get fingerprint image
         ack = (int)getImage();
+        // Handle different response codes
         if (ack != previous_ack)
         {
             lcd20x4_i2c_clear();
@@ -35,7 +52,6 @@ int enrolling(uint16_t pageId)
                 lcd20x4_i2c_puts(1, 0,"Error when receiving package");
                 break;
             case FINGERPRINT_NOFINGER:
-                //printf("Can't detect finger");
                 lcd20x4_i2c_puts(1, 0,"Can't detect finger");
                 break;
             case FINGERPRINT_IMAGEFAIL:
@@ -49,7 +65,9 @@ int enrolling(uint16_t pageId)
     ack = -1;
     while (ack != FINGERPRINT_OK)
     {
+        // Convert image to template
         ack = image2Tz(1);
+        // Handle conversion result
         switch (ack)
         {
         case FINGERPRINT_OK:
@@ -69,20 +87,24 @@ int enrolling(uint16_t pageId)
             break;
         }
     }
+    // Check if fingerprint already exists
     ack = fingerFastSearch();
     if (ack == FINGERPRINT_OK) 
     {
         lcd20x4_i2c_puts(1, 0,"Fingerprint already exists");
         return -1; 
     }
+    // Prompt for re-enrollment
     while (getImage() != FINGERPRINT_NOFINGER)
         ;
     ack = FINGERPRINT_NOFINGER;
     lcd20x4_i2c_puts(1, 0,"Put finger to enroll again");
     sleep(2);
     previous_ack = -1;
+    // Re-enrollment process
     while (ack != FINGERPRINT_OK)
     {
+        // Check timeout
         clock_gettime(CLOCK_MONOTONIC, &current_time);
         long elapsed_time = (current_time.tv_sec - start_time.tv_sec) + (current_time.tv_nsec - start_time.tv_nsec) / 1000000000;
         if (elapsed_time >= max_execution_time) 
@@ -92,10 +114,13 @@ int enrolling(uint16_t pageId)
             lcd20x4_i2c_clear();
             return FINGERPRINT_TIMEOUT;
         }
+        // Get fingerprint image
         ack = getImage();
+        // Handle different response codes
         if (ack != previous_ack)
         {
             lcd20x4_i2c_clear();
+            // Handle conversion result
             switch (ack)
             {
             case FINGERPRINT_OK:
@@ -116,8 +141,9 @@ int enrolling(uint16_t pageId)
         }
     }
     lcd20x4_i2c_clear();
+    // Convert image to template
     ack = image2Tz(2);
-
+    // Handle conversion result
     switch (ack)
     {
     case FINGERPRINT_OK:
@@ -136,6 +162,7 @@ int enrolling(uint16_t pageId)
         printf("Fail to generate the image for the lackness of valid primary image\r\n ");
         break;
     }
+    // Create fingerprint model
     ack = createModel();
     switch (ack)
     {
@@ -160,6 +187,7 @@ int enrolling(uint16_t pageId)
             return 0;
         }
     }
+    // Store fingerprint model
     ack = storeModel(pageId);
     switch (ack)
     {

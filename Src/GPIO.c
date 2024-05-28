@@ -1,5 +1,12 @@
 #include "../Inc/GPIO.h"
 
+
+/**
+ * @brief Initializes a GPIO pin with the specified direction.
+ * @param pinNumber The number of the GPIO pin to initialize.
+ * @param direction The direction of the GPIO pin ("in" or "out").
+ * @return 1 on success, 0 on failure.
+ */
 int GPIO_init(int pinNumber, const char* direction) 
 {
     char gpioPath[50];
@@ -15,7 +22,6 @@ int GPIO_init(int pinNumber, const char* direction)
         if (export_fd == -1) 
         {
             syslog_log(LOG_ERR, __func__, "strerror", "Error opening GPIO export", strerror(errno));
-            //perror("Error opening GPIO export");
             return 0;
         }
 
@@ -32,7 +38,6 @@ int GPIO_init(int pinNumber, const char* direction)
     if (gpio_fd == -1) 
     {
         syslog_log(LOG_ERR, __func__, "strerror", "Error opening GPIO direction", strerror(errno));
-        //perror("Error opening GPIO direction");
         return 0;
     }
 
@@ -41,6 +46,15 @@ int GPIO_init(int pinNumber, const char* direction)
     close(gpio_fd);
     return 1;
 }
+/**
+ * @brief Reads the value of a GPIO pin.
+ *
+ * This function reads the current value of a GPIO pin. The value is read
+ * from the file descriptor associated with the GPIO pin.
+ *
+ * @param gpio_fd The file descriptor of the GPIO pin.
+ * @return The value of the GPIO pin (1 or 0).
+ */
 
 int GPIO_read(int gpio_fd)
 {
@@ -48,27 +62,57 @@ int GPIO_read(int gpio_fd)
     if (read(gpio_fd, &value, sizeof(value)) == -1)
     {
         syslog_log(LOG_ERR, __func__, "strerror", "Error reading GPIO value", strerror(errno));
-        //perror("Error reading GPIO value");
         close(gpio_fd);
         exit(EXIT_FAILURE);
     }
     return (value == '1') ? 1 : 0;
 }
-
-int GPIO_open(int pinNumber)
+/**
+ * @brief Writes a value to a GPIO pin.
+ *
+ * This function writes a value to a GPIO pin. The value is written
+ * to the file descriptor associated with the GPIO pin.
+ *
+ * @param gpio_fd The file descriptor of the GPIO pin.
+ * @param value The value to write to the GPIO pin (1 or 0).
+ */
+void GPIO_write(int gpio_fd, int value) 
+{
+    char val_str = (value == 1) ? '1' : '0';
+    if (write(gpio_fd, &val_str, 1) == -1) 
+    {
+        syslog_log(LOG_ERR, __func__, "Error writing GPIO value", strerror(errno));
+        //exit(EXIT_FAILURE);
+    }
+}
+/**
+ * @brief Opens a GPIO pin for reading or writing.
+ *
+ * This function opens the value file of a GPIO pin with the specified flag.
+ *
+ * @param pinNumber The number of the GPIO pin to open.
+ * @param flag The flag for opening the GPIO pin (O_RDONLY or O_WRONLY).
+ * @return The file descriptor of the GPIO pin.
+ */
+int GPIO_open(int pinNumber, int flag)
 {
     char gpioPath[50];
     snprintf(gpioPath, sizeof(gpioPath), "/sys/class/gpio/gpio%d/value", pinNumber);
-    int fd = open(gpioPath, O_RDONLY);
+    int fd = open(gpioPath, flag);
     if (fd == -1) 
     {
         syslog_log(LOG_ERR, __func__, "strerror", "Error opening GPIO value file", strerror(errno));
-        //perror("Error opening GPIO value file");
         exit(EXIT_FAILURE);
     }
     return fd;
 }
-
+/**
+ * @brief Closes a GPIO pin.
+ *
+ * This function closes the file descriptor associated with a GPIO pin.
+ *
+ * @param gpio_fd The file descriptor of the GPIO pin.
+ */
 void GPIO_close(int gpio_fd)
 {
     close(gpio_fd);

@@ -37,7 +37,6 @@ void lcd20x4_i2c_sendData(uint8_t data)
 
 /**
  * @brief Initialise LCD20x4
- * @param[in] *pI2cHandle - pointer to HAL I2C handle
  */
 bool lcd20x4_i2c_init()
 {

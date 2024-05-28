@@ -1,9 +1,13 @@
 #include "../Inc/keypad.h"
-// Function to enter and validate an ID from keypad
 
 extern int uart4_fd;
 
+// Define the buffer for the entered ID
 char code[MAX_LENGTH_ID + 1] = {'_', '_', '_', '\0'};
+
+/**
+ * @brief Initializes and displays the initial keypad entry screen.
+ */
 void beginDisplay()
 {
     lcd20x4_i2c_clear();
@@ -18,21 +22,31 @@ void beginDisplay()
     lcd20x4_i2c_print(3, 0, "* delete  # confirm");
     
 }
+/**
+ * @brief Reads and validates an ID entered through the keypad.
+ *
+ * This function waits for the user to enter an ID using the keypad, validates it, 
+ * and returns the ID if valid. It returns -1 if a timeout occurs.
+ *
+ * @return int The entered ID or -1 on timeout.
+ */
 int enter_ID_keypad()
 {
     beginDisplay();
     struct timespec start_time;
-    const int max_execution_time = 60;
+    const int max_execution_time = 60;// Maximum time allowed for input in seconds
     struct timespec current_time;
 
     uint8_t rx_buffer;
     int digit_count = 0;
     int attempts = 0;
-    // we'll wait half a minute
+
+    // Record the start time
     clock_gettime(CLOCK_MONOTONIC, &start_time);
 
     while (1)
     {
+        // Calculate elapsed time
         clock_gettime(CLOCK_MONOTONIC, &current_time);
         long elapsed_time = (current_time.tv_sec - start_time.tv_sec) + (current_time.tv_nsec - start_time.tv_nsec) / 1000000000;
         if (elapsed_time >= max_execution_time) 
@@ -42,10 +56,9 @@ int enter_ID_keypad()
             lcd20x4_i2c_clear();
             return -1;
         }
+        // Read from UART
         if(UART_read(uart4_fd, &rx_buffer, 1)>0)
-        //if (read(uart4_fd, &rx_buffer, 1) > 0)
         {
-           // printf("rx_buffer= %u",(unsigned int)rx_buffer);
             char character = convert_to_char(rx_buffer);
             // Handle character input
             if (character != '\0')
@@ -63,7 +76,6 @@ int enter_ID_keypad()
                     code[--digit_count] = '_';
                     // Update LCD display
                     lcd20x4_i2c_print(1, 9, code);
-                    // Delete the last entered digit
                 }
                 else if (character == '#')
                 {
@@ -91,7 +103,12 @@ int enter_ID_keypad()
         }
     }
 }
-
+/**
+ * @brief Converts a keypad value to its corresponding character.
+ *
+ * @param value The keypad value.
+ * @return char The corresponding character or '\0' if invalid.
+ */
 char convert_to_char(uint8_t value)
 {
     switch (value)
@@ -133,6 +150,6 @@ char convert_to_char(uint8_t value)
         printf("# ");
         return '#';
     default:
-        return '\0'; // Возвращаем null-символ в случае неправильного ввода
+        return '\0';  // Return null character for invalid input
     }
 }

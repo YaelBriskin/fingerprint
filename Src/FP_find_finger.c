@@ -3,6 +3,7 @@
 char mydata[23] = {0};
 extern uint8_t fingerID[2];
 
+// Function to convert a string to an integer
 int stringToInt(const char *str)
 {
 	int result = 0;
@@ -22,7 +23,16 @@ int stringToInt(const char *str)
 	}
 	return result;
 }
-// tries to scan your fingerprint for only 1 minute
+/**
+ * @brief Tries to find a fingerprint match and returns the corresponding ID.
+ *
+ * This function attempts to find a fingerprint match by scanning for a finger within a specific time frame.
+ * If a finger is detected, it generates a character file from the fingerprint image and stores it in the 
+ * character buffer. It then performs a fast search to identify the fingerprint and returns the corresponding ID.
+ *
+ * @param message The message to display during the fingerprint scanning process.
+ * @return int The ID of the fingerprint match if found, or -1 if no match is found or an error occurs.
+ */
 int findFinger(const char *message)
 {
 	lcd20x4_i2c_clear();
@@ -36,6 +46,7 @@ int findFinger(const char *message)
 	sleep(2);
  	clock_gettime(CLOCK_MONOTONIC, &start_time);
 
+ 	// Main loop for scanning the fingerprint
 	while (ack != FINGERPRINT_OK)
 	{
 		clock_gettime(CLOCK_MONOTONIC, &current_time);
@@ -47,11 +58,13 @@ int findFinger(const char *message)
             lcd20x4_i2c_clear();
             return 0;
         }
-		// detecting finger and store the detected finger image in ImageBuffer while returning successfull confirmation code; If there is no finger, returned confirmation code would be cant detect finger.
+		// detecting finger and store the detected finger image in ImageBuffer while returning successfull confirmation code; 
+		//If there is no finger, returned confirmation code would be cant detect finger.
 		ack = (int)getImage();
 		if (ack != previous_ack)
 		{
 			lcd20x4_i2c_clear();
+			// Handle different response codes
 			switch (ack)
 			{
 				// checks how the procedure went. FINGERPRINT_OK means good
@@ -75,7 +88,9 @@ int findFinger(const char *message)
 	}
 	// to generate character file from the original finger image in ImageBuffer and store the file in CharBuffer1 or CharBuffer2.
 	lcd20x4_i2c_clear();
+	// Convert image to template
 	ack = image2Tz(1);
+	// Handle different response codes
 	switch (ack)
 	{
 	// checks how the procedure went. FINGERPRINT_OK means good
@@ -100,7 +115,9 @@ int findFinger(const char *message)
 		return 0;
 	//
 	lcd20x4_i2c_clear();
+	// Search for fingerprint in database
 	ack = fingerFastSearch();
+	// Handle different response codes
 	switch (ack)
 	{
 	// checks how the procedure went. FINGERPRINT_OK means good
@@ -108,8 +125,7 @@ int findFinger(const char *message)
 		sprintf(num, "%d", (fingerID[1] | (fingerID[0] << 8)));
 		sprintf(mydata, "%s ID #%s", message, num);
 		lcd20x4_i2c_puts(1, 0, mydata);
-		sleep(2);
-		return stringToInt(num);
+		return stringToInt(num);// Return fingerprint ID
 	case FINGERPRINT_PACKETRECIEVER:
 		lcd20x4_i2c_puts(1, 0, "Error when receiving package");
 		break;
