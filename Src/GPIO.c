@@ -7,7 +7,7 @@
  * @param direction The direction of the GPIO pin ("in" or "out").
  * @return 1 on success, 0 on failure.
  */
-int GPIO_init(int pinNumber, const char* direction) 
+Status_t GPIO_init(int pinNumber, const char* direction) 
 {
     char gpioPath[50];
     char direction_path[50];
@@ -19,10 +19,10 @@ int GPIO_init(int pinNumber, const char* direction)
     {
         // If the folder does not exist, create it
         int export_fd = open("/sys/class/gpio/export", O_WRONLY);
-        if (export_fd == -1) 
+        if (export_fd == ERROR) 
         {
             syslog_log(LOG_ERR, __func__, "strerror", "Error opening GPIO export", strerror(errno));
-            return 0;
+            return FAILED;
         }
 
         // export GPIO
@@ -35,16 +35,16 @@ int GPIO_init(int pinNumber, const char* direction)
     snprintf(direction_path, sizeof(direction_path), "/sys/class/gpio/gpio%d/direction", pinNumber);
     // Open the file direction
     int gpio_fd = open(direction_path, O_WRONLY);
-    if (gpio_fd == -1) 
+    if (gpio_fd == ERROR) 
     {
         syslog_log(LOG_ERR, __func__, "strerror", "Error opening GPIO direction", strerror(errno));
-        return 0;
+        return FAILED;
     }
 
     // Set the GPIO direction
     write(gpio_fd, direction, strlen(direction));
     close(gpio_fd);
-    return 1;
+    return SUCCESS;
 }
 /**
  * @brief Reads the value of a GPIO pin.
@@ -59,7 +59,7 @@ int GPIO_init(int pinNumber, const char* direction)
 int GPIO_read(int gpio_fd)
 {
     char value;
-    if (read(gpio_fd, &value, sizeof(value)) == -1)
+    if (read(gpio_fd, &value, sizeof(value)) == ERROR)
     {
         syslog_log(LOG_ERR, __func__, "strerror", "Error reading GPIO value", strerror(errno));
         close(gpio_fd);
@@ -79,7 +79,7 @@ int GPIO_read(int gpio_fd)
 void GPIO_write(int gpio_fd, int value) 
 {
     char val_str = (value == 1) ? '1' : '0';
-    if (write(gpio_fd, &val_str, 1) == -1) 
+    if (write(gpio_fd, &val_str, 1) == ERROR) 
     {
         syslog_log(LOG_ERR, __func__, "Error writing GPIO value", strerror(errno));
         //exit(EXIT_FAILURE);
@@ -99,7 +99,7 @@ int GPIO_open(int pinNumber, int flag)
     char gpioPath[50];
     snprintf(gpioPath, sizeof(gpioPath), "/sys/class/gpio/gpio%d/value", pinNumber);
     int fd = open(gpioPath, flag);
-    if (fd == -1) 
+    if (fd == ERROR) 
     {
         syslog_log(LOG_ERR, __func__, "strerror", "Error opening GPIO value file", strerror(errno));
         exit(EXIT_FAILURE);

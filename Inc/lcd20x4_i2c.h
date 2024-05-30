@@ -7,7 +7,8 @@
 #include <string.h>
 #include <stdarg.h>
 #include <unistd.h>
-#include "../Inc/I2C.h"
+#include "I2C.h"
+#include "defines.h"
 
 
 bool lcd20x4_i2c_init();

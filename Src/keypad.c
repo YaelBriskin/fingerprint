@@ -52,12 +52,12 @@ int enter_ID_keypad()
         if (elapsed_time >= max_execution_time) 
         {
             lcd20x4_i2c_puts(1, 0,"Timeout: One minute has passed.");
-            sleep(3);
+            sleep(SLEEP_DURATION);
             lcd20x4_i2c_clear();
-            return -1;
+            return ERROR;
         }
         // Read from UART
-        if(UART_read(uart4_fd, &rx_buffer, 1)>0)
+        if(UART_read(uart4_fd, &rx_buffer, 1) == SUCCESS)
         {
             char character = convert_to_char(rx_buffer);
             // Handle character input
@@ -96,7 +96,7 @@ int enter_ID_keypad()
                 }
             }
             else
-                return -1;
+                return ERROR;
 
             usleep(100000);
             fflush(stdout);

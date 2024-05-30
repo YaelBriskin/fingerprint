@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <string.h>
 #include "syslog_util.h"
+#include "defines.h"
+#include "config.h"
 
 #define GPIO_BUTTON_IN 66  
 #define GPIO_BUTTON_OUT 67 
@@ -15,7 +17,7 @@
 #define GPIO_LED_RED 69
 #define GPIO_BUZZER 44
 
-int GPIO_init(int pinNumber, const char* direction);
+Status_t GPIO_init(int pinNumber, const char* direction);
 int GPIO_read(int pinNumber);
 void GPIO_write(int gpio_fd, int value);
 int GPIO_open(int pinNumber, int flag);

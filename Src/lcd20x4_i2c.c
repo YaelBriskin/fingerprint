@@ -32,7 +32,6 @@ void lcd20x4_i2c_sendData(uint8_t data)
           data_0_3 | LCD_BK_LIGHT | LCD_RS,
       };
   I2C_write(i2cData, 4);
-  //usleep(20);
 }
 
 /**
@@ -41,7 +40,7 @@ void lcd20x4_i2c_sendData(uint8_t data)
 bool lcd20x4_i2c_init()
 {
   usleep(50000);
-  if (I2C_Init() != 1)
+  if (I2C_Init() != SUCCESS)
     return false;
   // Initialise LCD for 4-bit operation
   // 1. Wait at least 15ms
@@ -140,7 +139,6 @@ void lcd20x4_i2c_printf(const char *str, ...)
 // Function to display a message on the LCD at the specified row and column
 void lcd20x4_i2c_print(uint8_t row, uint8_t col, const char *message) 
 {
-    //usleep(1000);
     lcd20x4_i2c_setCursor(row, col);
     for (int i = 0; message[i] != '\0'; i++) 
     {
@@ -160,7 +158,6 @@ int wordLength(const char *str)
 }
 void lcd20x4_i2c_puts(uint8_t x, uint8_t y, const char *str)
 {
-  //usleep(1000);
   lcd20x4_i2c_setCursor(x, y);
   usleep(1000);
   currentX = x;

@@ -11,6 +11,8 @@
 #include <fcntl.h>
 #include <string.h>
 #include "syslog_util.h"
+#include "defines.h"
+#include "config.h"
 
 #define UART4_DEVICE "/dev/ttyS4"
 #define UART2_DEVICE "/dev/ttyS2"
@@ -22,7 +24,7 @@
 
 int UART_Init(const char* device, speed_t UART_BaudRate);
 void UART_write(int uart_fd,const char* data, int size);
-int UART_read(int uart_fd,char* buffer, int size);
+Status_t UART_read(int uart_fd,char* buffer, int size);
 void UART_close(int uart_fd);
 
 #endif 

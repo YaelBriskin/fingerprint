@@ -7,8 +7,8 @@
 #include "../Inc/UART.h"
 #include "../Inc/FP_delete.h"
 #include "../Inc/FP_enrolling.h"
-
-#define MAX_RETRIES 10
+#include "defines.h"
+#include "config.h"
 
 // confirmation codes
 #define FINGERPRINT_OK 0x00                 // выполнение команды завершено успешно
@@ -76,6 +76,7 @@
 #define MIN_SIZE_PACKET 9
 #define SIZE_Eth 7
 #define TIMEOUT 3000
+#define ADDRESS_LEN 4
 
 /// Соответствующее местоположение, которое установлено fingerFastSearch ()
 uint8_t fingerID[2];
@@ -88,7 +89,7 @@ uint16_t templateCount;
 typedef struct
 {
    uint16_t start_code; ///< "Wakeup" code for packet detection
-   uint8_t address[4];  ///< 32-bit Fingerprint sensor address
+   uint8_t address[ADDRESS_LEN];  ///< 32-bit Fingerprint sensor address
    uint8_t type;        ///< Type of packet
    uint16_t length;     ///< Length of packet
    uint8_t data[SIZE];

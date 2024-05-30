@@ -3,7 +3,7 @@
 pthread_mutex_t displayMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t displayCond = PTHREAD_COND_INITIALIZER;
 
-int displayLocked = 0;
+int displayLocked = UNLOCK;
 
 /**
  * @brief This function returns the current time in UTC format as an integer timestamp.
@@ -24,9 +24,9 @@ int getCurrent_UTC_Timestamp()
 void buzzer()
 {
     int fd_buzzer = GPIO_open(GPIO_BUZZER, O_WRONLY);
-    GPIO_write(fd_buzzer,1);
-    usleep(500000);
-    GPIO_write(fd_buzzer,0);
+    GPIO_write(fd_buzzer,BUZZER_ON);
+    usleep(SLEEP_BUZZER);
+    GPIO_write(fd_buzzer,BUZZER_OFF);
     GPIO_close(GPIO_BUZZER);
 }
 /**
@@ -45,7 +45,7 @@ void *fingerPrintThread(void *arg)
         int button_fd_in = GPIO_open(GPIO_BUTTON_IN, O_RDONLY);
         int button_fd_out = GPIO_open(GPIO_BUTTON_OUT, O_RDONLY);
         int button_fd_new = GPIO_open(GPIO_BUTTON_NEW, O_RDONLY);
-        if (button_fd_in == -1 || button_fd_out == -1 || button_fd_new == -1)
+        if (button_fd_in == ERROR || button_fd_out == ERROR || button_fd_new == ERROR)
         {
             syslog_log(LOG_ERR, __func__, "strerror", "Error opening GPIO value file", strerror(errno));
             break;
@@ -53,102 +53,154 @@ void *fingerPrintThread(void *arg)
         // press button IN
         if (!GPIO_read(button_fd_in)) 
         {
-            pthread_mutex_lock(&displayMutex);
-            displayLocked = 1;
-            int id = findFinger("Hello");//scan fingerprint
+            if (pthread_mutex_lock(&displayMutex) != MUTEX_OK)
+            {
+                syslog_log(LOG_ERR, __func__, "strerror", "Error locking mutex", strerror(errno));
+                break;
+            }
+            displayLocked = LOCK;
+            int id = findFinger(HELLO);//scan fingerprint
             timestamp = getCurrent_UTC_Timestamp();//get current date and time in UTC format
             if (id)
             {		
                 buzzer();//turn on the buzzer
-		        sleep(2);   
-                DB_write(id, timestamp, "in", "true");//write to database
+		        sleep(SLEEP_LCD);   
+                //write to database
+                for (int attempts = 0; attempts < g_max_retries; attempts++) 
+                {
+                    if (DB_write(id, timestamp, IN, TRUE) == SUCCESS) 
+                        break;
+                }
             }
             else if(id == -1)
             {
 		        lcd20x4_i2c_puts(1, 0, "No matching in the library");//show on LCD
-		        sleep(2);
+		        sleep(SLEEP_LCD);
             }
             else
             {
                 id = enter_ID_keypad();//enter ID using the keypad
                 if (id > 0)
                 {
-                    if(DB_write(id, timestamp, "in", "false"))//write to database
+                    if(DB_write(id, timestamp, IN, FALSE) == SUCCESS)//write to database
                     {
                         char mydata[23] = {0};
                         sprintf(mydata, "Hello  ID #%d", id);
                         lcd20x4_i2c_puts(1,0,mydata);//show on LCD
                         buzzer();//turn on the buzzer
-                        sleep(2);
+                        sleep(SLEEP_LCD);
                     }
                     else
                     lcd20x4_i2c_puts(1,0,"Failed to write to database");//show on LCD
-                    sleep(2);
+                    sleep(SLEEP_LCD);
                 }
             }
-            displayLocked = 0; 
-            pthread_cond_signal(&displayCond);// Send a signal to finish working with the display
-            lcd20x4_i2c_clear();
-            pthread_mutex_unlock(&displayMutex);
+            displayLocked = UNLOCK;
+            // Send a signal to finish working with the display 
+            if (pthread_cond_signal(&displayCond) != SIGNAL_OK) 
+            {
+                syslog_log(LOG_ERR, __func__, "strerror", "Error signaling condition variable", strerror(errno));
+            }
+            if (pthread_mutex_unlock(&displayMutex) != MUTEX_OK)
+            {
+                syslog_log(LOG_ERR, __func__, "strerror", "Error unlocking mutex", strerror(errno));
+                break;
+            }
         }
         // press button OUT
         if (!GPIO_read(button_fd_out)) 
         {
-            pthread_mutex_lock(&displayMutex);
-            displayLocked = 1;            
-            int id = findFinger("Goodbye");//scan fingerprint
+            if (pthread_mutex_lock(&displayMutex) != MUTEX_OK)
+            {
+                syslog_log(LOG_ERR, __func__, "strerror", "Error locking mutex", strerror(errno));
+                break;
+            }
+            displayLocked = LOCK;            
+            int id = findFinger(GOODBYE);//scan fingerprint
             timestamp = getCurrent_UTC_Timestamp();//get current date and time in UTC format
             if (id)
             {
                 buzzer();//turn on the buzzer
-		        sleep(2); 
-                DB_write(id, timestamp, "out", "true");//write to database
+		        sleep(SLEEP_LCD); 
+                //write to database
+                for (int attempts = 0; attempts < g_max_retries; attempts++) 
+                {
+                    if (DB_write(id, timestamp, OUT, TRUE) == SUCCESS) 
+                        break;
+                }
             }
             else if(id == -1)
             {
 		        lcd20x4_i2c_puts(1, 0, "No matching in the library");//show on LCD
-		        sleep(2);
+		        sleep(SLEEP_LCD);
             }
             else
             {
                 id = enter_ID_keypad();//enter ID using the keypad
                 if (id > 0)
                 {
-                    if(DB_write(id, timestamp, "out", "false"))//write to database
+                    if(DB_write(id, timestamp, OUT, FALSE)== SUCCESS)//write to database
                     {
                         char mydata[23] = {0};
                         sprintf(mydata, "Goodbye  ID #%d", id);
                         lcd20x4_i2c_puts(1,0,mydata);//show on LCD
                         buzzer();//turn on the buzzer
-                        sleep(2);
+                        sleep(SLEEP_LCD);
                     }
                     else
                     lcd20x4_i2c_puts(1,0,"Failed to write to database");//show on LCD
-                    sleep(2);
+                    sleep(SLEEP_LCD);
                 }
             }
-            displayLocked = 0; 
-            pthread_cond_signal(&displayCond);// Send a signal to finish working with the display
+            displayLocked = UNLOCK; 
+            // Send a signal to finish working with the display 
+            if (pthread_cond_signal(&displayCond) != SIGNAL_OK) 
+            {
+                syslog_log(LOG_ERR, __func__, "strerror", "Error signaling condition variable", strerror(errno));
+            }
             lcd20x4_i2c_clear();
-            pthread_mutex_unlock(&displayMutex);
+            if (pthread_mutex_unlock(&displayMutex) != MUTEX_OK)
+            {
+                syslog_log(LOG_ERR, __func__, "strerror", "Error unlocking mutex", strerror(errno));
+                break;
+            }
         }
         // press button NEW (new employee)
         if (!GPIO_read(button_fd_new)) 
         {
             int id = getNextAvailableID();//get next ID value
-            pthread_mutex_lock(&displayMutex);
-            displayLocked = 1;
+            if (pthread_mutex_lock(&displayMutex) != MUTEX_OK)
+            {
+                syslog_log(LOG_ERR, __func__, "strerror", "Error locking mutex", strerror(errno));
+                break;
+            }
+            displayLocked = LOCK;
             int ack=enrolling(id);//register a new fingerprint
             if (ack)
             {
                 DB_newEmployee();//add a new employee to the database
-                char messageString[50];
+                char messageString[MESSAGE_LEN];
                 sprintf(messageString, "Employee %d added successfully.", id);
                 lcd20x4_i2c_puts(0,0,messageString);//show on LCD
                 buzzer();//turn on the buzzer
                 timestamp = getCurrent_UTC_Timestamp();//get current date and time in UTC format
-                send_json_new_employee (id,timestamp);//send to the CRM ID of a new employee
-                sleep(3);
+                //send to the CRM ID of a new employee
+                // Retry sending JSON data if it fails
+                int retries = 0;
+                while (retries < g_max_retries && send_json_new_employee(id, timestamp) != SUCCESS)
+                {
+                    retries++;
+                    syslog_log(LOG_ERR, __func__, "strerror", "Failed to send new employee data, retrying...", strerror(errno));
+                    sleep(1); // Add some delay between retries if necessary
+                }
+                if (retries == g_max_retries)
+                {
+                    syslog_log(LOG_ERR, __func__, "strerror", "Failed to send new employee data after retries", strerror(errno));
+                    deleteModel(id);
+                    DB_delete(id);
+                    lcd20x4_i2c_puts(0,0," Connection error. The new employee ID were not saved");//show on LCD
+                }
+                sleep(SLEEP_LCD);
             }
             else
             {
@@ -157,12 +209,20 @@ void *fingerPrintThread(void *arg)
                 lcd20x4_i2c_puts(1,0,"Enrolling failed.");//show on LCD
             }
 
-            displayLocked = 0; 
-            pthread_cond_signal(&displayCond); // Send a signal to finish working with the display
+            displayLocked = UNLOCK; 
+            // Send a signal to finish working with the display 
+            if (pthread_cond_signal(&displayCond) != SIGNAL_OK) 
+            {
+                syslog_log(LOG_ERR, __func__, "strerror", "Error signaling condition variable", strerror(errno));
+            }
             lcd20x4_i2c_clear();
-            pthread_mutex_unlock(&displayMutex);
+            if (pthread_mutex_unlock(&displayMutex) != MUTEX_OK)
+            {
+                syslog_log(LOG_ERR, __func__, "strerror", "Error unlocking mutex", strerror(errno));
+                break;
+            }
         }
-        usleep(10000);
+        usleep(DELAY);
         GPIO_close(GPIO_BUTTON_IN);
         GPIO_close(GPIO_BUTTON_OUT);
         GPIO_close(GPIO_BUTTON_NEW);
@@ -184,22 +244,22 @@ void *databaseThread(void *arg)
         int fd_led = GPIO_open(GPIO_LED_RED,O_WRONLY);
         //checks whether there is data in the database that has not yet been sent and 
         //if there is any, it sends it to the server
-        if (DB_find()==-1)
+        if (DB_find()== ERROR)
         {
             //if it fails to send data 10 times in a row, the LED will light up
-            if (++count == MAX_RETRIES)
+            if (++count == g_max_retries)
                 //led on
-                GPIO_write(fd_led,1);
+                GPIO_write(fd_led,LED_ON);
 
         }
         else
         {
             count = 0;
             //led off
-            GPIO_write(fd_led,0);
+            GPIO_write(fd_led,LED_OFF);
         }
         GPIO_close(GPIO_LED_RED);
-        sleep(120);
+        sleep(DATABASE_SLEEP_DURATION);
     }
     return NULL;
 }
@@ -221,14 +281,14 @@ void *clockThread(void *arg)
         timeinfo = localtime(&rawtime);
 
         // If the day has changed since the last check, it deletes old records from the database.
-        if (lastDay != -1 && lastDay != timeinfo->tm_mday) 
+        if (lastDay != -1 && lastDay != timeinfo->tm_mday)
             DB_delete_old_records(rawtime);
-        
+
         //Updates the last checked day
         lastDay = timeinfo->tm_mday;
 
-        char timeString[20] = {'\0'};
-        strftime(timeString, 20, "%X %d/%m/%y", timeinfo);
+        char timeString[TIME_STR_LEN] = {'\0'};
+        strftime(timeString, TIME_STR_LEN, "%X %d/%m/%y", timeinfo);
         pthread_mutex_lock(&displayMutex);
         while (displayLocked) 
         {            
@@ -272,7 +332,7 @@ void *socket_serverThread (void *arg)
         {
             // Spawn a new thread to handle the client
             pthread_t client_thread;
-            if (pthread_create(&client_thread, NULL, handle_clientThread, (void *)client_socket) != 0) 
+            if (pthread_create(&client_thread, NULL, handle_clientThread, (void *)client_socket) != THREAD_OK) 
             {
                 syslog_log(LOG_ERR, __func__, "strerror", " Error creating client thread: ", strerror(errno));
                 close(client_socket);
@@ -293,27 +353,25 @@ void *socket_serverThread (void *arg)
  */
 void *handle_clientThread(void *arg) 
 {
-  int client_socket = (int)arg;
+    int client_socket = (int)arg;
     int client_id;
-  while (1) 
-  {
-    int received_bytes = read_data_from_client(client_socket, &client_id);
-
-    if (received_bytes) 
+    while (1) 
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "  Error reading from client:  ", strerror(errno));
-        break;
-    } 
-    else 
-    {
-        // Process received data
-        printf("Received %d bytes from client %d\n", received_bytes, client_socket);
+        int received_bytes = read_data_from_client(client_socket, &client_id);
+        if (received_bytes == FAILED) 
+        {
+            syslog_log(LOG_ERR, __func__, "strerror", "  Error reading from client:  ", strerror(errno));
+            break;
+        } 
+        else 
+        {
+            // Process received data
+            printf("Received %d bytes from client %d\n", received_bytes, client_socket);
     
-        //remove the received fingerprint from the database
-        deleteModel(client_id);
-        DB_delete(client_id);
+            //remove the received fingerprint from the database
+            deleteModel(client_id);
+            DB_delete(client_id);
+        }
     }
-  }
-  close(client_socket);
-  return NULL;
+    close(client_socket);
 }

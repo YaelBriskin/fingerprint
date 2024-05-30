@@ -12,10 +12,12 @@
 #include <syslog.h>
 #include "../Inc/FP_delete.h"
 #include "../Inc/DataBase.h"
+#include "defines.h"
+#include "config.h"
 
-#define SERVER_PORT 8080
+#define SERVER_PORT 64789
 
 int create_server_socket();
-int read_data_from_client(int client_socket, int *client_id);
+Status_t read_data_from_client(int client_socket, int *client_id);
 
 #endif 

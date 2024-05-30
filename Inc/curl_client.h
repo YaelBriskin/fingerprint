@@ -6,10 +6,10 @@
 #include <stdlib.h>
 #include <curl/curl.h>
 #include <cjson/cJSON.h>
-
-#define URL "https://st-portal.online/RTG-Reports/api/attendance/fingerprint"
+#include "defines.h"
+#include "config.h"
 
 int send_request(const char *post_data);
-int send_json_data (int tz, const char* event, int timestamp, const char* fpm);
-int send_json_new_employee (int id, int timestamp);
+Status_t send_json_data (int tz, const char* event, int timestamp, const char* fpm);
+Status_t send_json_new_employee (int id, int timestamp);
 #endif 

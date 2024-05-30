@@ -7,6 +7,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include "defines.h"
+#include "config.h"
+
 
 #define LOG_FACILITY LOG_LOCAL0
 

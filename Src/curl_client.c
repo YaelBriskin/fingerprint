@@ -13,7 +13,7 @@ int send_request(const char *post_data)
 {
     CURL *curl;
     CURLcode res;
-    int result = 1;
+    int result = SUCCESS;
     long response_code;
 
     // Initialize the cURL library
@@ -23,14 +23,15 @@ int send_request(const char *post_data)
     {
         struct curl_slist *headers = NULL;
         headers = curl_slist_append(headers, "Content-Type: application/json");
-        headers = curl_slist_append(headers, "device-id: 1"); 
+        headers = curl_slist_append(headers, g_header);
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+ 
         // Set the URL to which the request will be sent
-        curl_easy_setopt(curl, CURLOPT_URL, URL);
+        curl_easy_setopt(curl, CURLOPT_URL, g_url);
         // Setting the request method (POST)
         curl_easy_setopt(curl, CURLOPT_POST, 1L);
         // Setting the data to be sent
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data);
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         // Execute the request
         res = curl_easy_perform(curl);
         // Check the server response status code
@@ -39,7 +40,7 @@ int send_request(const char *post_data)
         if (res != CURLE_OK) 
         {
             syslog_log(LOG_ERR, __func__, "format", "curl_easy_perform() failed: %s", curl_easy_strerror(res));
-            result = 0; 
+            result = FAILED; 
         }
 
         // Release resources
@@ -47,7 +48,7 @@ int send_request(const char *post_data)
         curl_slist_free_all(headers);
     } 
     else 
-        result = 0; 
+        result = FAILED; 
     curl_global_cleanup();
     return result;
 }
@@ -62,7 +63,7 @@ int send_request(const char *post_data)
  * @param fpm The fingerprint module identifier.
  * @return 1 if the data was successfully sent, 0 otherwise.
  */
-int send_json_data (int id, const char* event, int timestamp, const char* fpm)
+Status_t send_json_data (int id, const char* event, int timestamp, const char* fpm)
 {   
     cJSON *root = cJSON_CreateObject();
     cJSON_AddNumberToObject(root, "id", id);
@@ -76,8 +77,8 @@ int send_json_data (int id, const char* event, int timestamp, const char* fpm)
     free(json_data);
 
     if (result)
-        return 1;
-    return 0;
+        return SUCCESS;
+    return FAILED;
 }
 
 /**
@@ -89,7 +90,7 @@ int send_json_data (int id, const char* event, int timestamp, const char* fpm)
  * @param timestamp The timestamp of the registration.
  * @return 1 if the data was successfully sent, 0 otherwise.
  */
-int send_json_new_employee (int id,int timestamp)
+Status_t send_json_new_employee (int id,int timestamp)
 {   
     cJSON *root = cJSON_CreateObject();
     cJSON_AddNumberToObject(root, "id", id);
@@ -101,10 +102,10 @@ int send_json_new_employee (int id,int timestamp)
     int result = send_request(json_data);
     cJSON_Delete(root);
     free(json_data);
-    if (result != 0)
+    if (result != SUCCESS)
     {
         //fprintf(stderr, "Failed to send request.\n");
-        return 0;
+        return FAILED;
     }
-    return 1;
+    return SUCCESS;
 }

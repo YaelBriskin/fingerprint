@@ -14,13 +14,15 @@
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
 #include "syslog_util.h"
+#include "defines.h"
+#include "config.h"
 
 #define I2C_BUS "/dev/i2c-2" 
 #define I2C_ADDRESS 0x27 
 
 #define MAX_RETRIES 10
 
-int I2C_Init();
+Status_t I2C_Init();
 void I2C_write(uint8_t *buffer, int size);
 void I2C_close();
 

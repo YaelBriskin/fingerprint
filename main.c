@@ -10,83 +10,96 @@
 #include "./Inc/DataBase.h"
 #include "./Inc/lcd20x4_i2c.h"
 #include "./Inc/threads.h"
+#include "./Inc/config.h"
 #include "./Inc/syslog_util.h"
+#include "./Inc/defines.h"
+
 #include <stdbool.h>
 #include <time.h>
 
 volatile bool isRunning = true;
 int uart2_fd, uart4_fd;
 
-int init()
+Status_t init()
 {
-  if (GPIO_init(GPIO_BUTTON_IN, "in") != 1 || GPIO_init(GPIO_BUTTON_OUT, "in") != 1 || GPIO_init(GPIO_BUTTON_NEW, "in") != 1)
+  if (GPIO_init(GPIO_BUTTON_IN, "in") != SUCCESS || GPIO_init(GPIO_BUTTON_OUT, "in") != SUCCESS || GPIO_init(GPIO_BUTTON_NEW, "in") != SUCCESS)
   {
     syslog_log(LOG_ERR, __func__, "strerror", "GPIO BUTTON initialization failed", strerror(errno));
-    return 0;
+    return FAILED;
   }
-  if (GPIO_init(GPIO_BUZZER, "out") != 1)
+  if (GPIO_init(GPIO_BUZZER, "out") != SUCCESS)
   {
     syslog_log(LOG_ERR, __func__, "strerror", "GPIO BUZZER initialization failed", strerror(errno));
-    return 0;
+    return FAILED;
   }
-  if (GPIO_init(GPIO_LED_RED, "out") != 1)
+  if (GPIO_init(GPIO_LED_RED, "out") != SUCCESS)
   {
     syslog_log(LOG_ERR, __func__, "strerror", "GPIO LED initialization failed", strerror(errno));
-    return 0;
+    return FAILED;
   }
   if (!lcd20x4_i2c_init())
   {
     syslog_log(LOG_ERR, __func__, "strerr", "LCD initialization failed!", NULL);
-    return 0;
+    return FAILED;
   }
   uart2_fd = UART_Init(UART2_DEVICE, UART2_BaudRate);
   uart4_fd = UART_Init(UART4_DEVICE, UART4_BaudRate);
   if (uart2_fd < 1)
   {
     syslog_log(LOG_ERR, __func__, "strerror", "UART2 initialization failed", strerror(errno));
-    return 0;
+    return FAILED;
   }
   if (uart4_fd < 1)
   {
     syslog_log(LOG_ERR, __func__, "strerror", "UART4 initialization failed", strerror(errno));
-    return 0;
+    return FAILED;
   }
   printf("GPIO initialization successful!\n");
   printf("LCD initialization successful!\n");
   printf("UART initialization successful!\n");
-  return 1;
+  return SUCCESS;
 }
 int main()
 {
+  Config_t config;
   pthread_t thread_datetime, thread_FPM, thread_database, thread_socket;
   syslog_init();
     // Initialize I2C Display
-  if (init())
+  if (init() == SUCCESS && read_config(&config) == SUCCESS)
   {
+    // Initialize global variables
+    g_server_port = config.server_port;
+    g_month = config.month;
+    strncpy(g_url, config.url, MAX_URL_LENGTH);
+    strncpy(g_header, config.header, MAX_HEADER_LENGTH);
+    g_max_retries = config.max_retries;
+
     // create or open database
     DB_open();
-    int button_fd_led = GPIO_open(GPIO_LED_RED,O_WRONLY);
-    GPIO_write(button_fd_led,0);
+
+    int fd_led = GPIO_open(GPIO_LED_RED,O_WRONLY);
+    GPIO_write(fd_led,0);
+    GPIO_close(fd_led);
     // Create a threads
-    if (pthread_create(&thread_datetime, NULL, clockThread, NULL) != 0)
+    if (pthread_create(&thread_datetime, NULL, clockThread, NULL) != THREAD_OK)
     {
       syslog_log(LOG_ERR, __func__, "strerror", "Error creating displayThread thread", strerror(errno));
-      return 1;
+      return THREAD_ERROR;
     }
-    if (pthread_create(&thread_FPM, NULL, fingerPrintThread, NULL) != 0)
+    if (pthread_create(&thread_FPM, NULL, fingerPrintThread, NULL) != THREAD_OK)
     {
       syslog_log(LOG_ERR, __func__, "strerror", "Error creating fingerPrintThread thread", strerror(errno));
-      return 1;
+      return THREAD_ERROR;
     }
-    if (pthread_create(&thread_database, NULL, databaseThread, NULL) != 0)
+    if (pthread_create(&thread_database, NULL, databaseThread, NULL) != THREAD_OK)
     {
       syslog_log(LOG_ERR, __func__, "strerror", "Error creating displayThread thread", strerror(errno));
-      return 1;
+      return THREAD_ERROR;
     }
-    if (pthread_create(&thread_socket, NULL, socket_serverThread, NULL) != 0) 
+    if (pthread_create(&thread_socket, NULL, socket_serverThread, NULL) != THREAD_OK) 
     {
       syslog_log(LOG_ERR, __func__, "strerror", "Error creating socketThread thread", strerror(errno));
-      return 1;
+      return THREAD_ERROR;
   }
     // Wait for the thread to complete
     pthread_join(thread_datetime, NULL);
@@ -95,6 +108,5 @@ int main()
     pthread_join(thread_socket, NULL);
   }
   else
-
     syslog_close();
 }
