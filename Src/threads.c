@@ -101,6 +101,7 @@ void *fingerPrintThread(void *arg)
             {
                 syslog_log(LOG_ERR, __func__, "strerror", "Error signaling condition variable", strerror(errno));
             }
+            lcd20x4_i2c_clear();
             if (pthread_mutex_unlock(&displayMutex) != MUTEX_OK)
             {
                 syslog_log(LOG_ERR, __func__, "strerror", "Error unlocking mutex", strerror(errno));
