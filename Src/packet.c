@@ -330,20 +330,25 @@ uint8_t GetFromUart(fingerprintPacket *packet)
 	usleep(DELAY);
 	// Check the first data read
 	if (UART_read(uart2_fd, pData, MIN_SIZE_PACKET) == FAILED)
+	{
 		return FINGERPRINT_TIMEOUT;
+	}
 	// shift a byte 8 bits to the left and then combine it with the next byte
 	length = ((uint16_t)pData[7] << 8) | pData[8];
 	if (length > SIZE - MIN_SIZE_PACKET)
+	{
 		// Packet length exceeds buffer size
 		return -1;
-
+	}
 	// Check the second data read
 	if (UART_read(uart2_fd, pData + MIN_SIZE_PACKET, length) == FAILED)
+	{
 		return FINGERPRINT_TIMEOUT;
-
+	}
 	if ((pData[idx] != (FINGERPRINT_STARTCODE >> 8)) || ((pData[idx + 1] != (FINGERPRINT_STARTCODE & 0xFF))))
+	{	
 		return FINGERPRINT_BADPACKET;
-
+	}
 	packet->start_code = (uint16_t)pData[idx++] << 8;
 	packet->start_code |= pData[idx++];
 
@@ -353,7 +358,9 @@ uint8_t GetFromUart(fingerprintPacket *packet)
 	packet->address[3] = pData[idx++];
 
 	if (pData[idx] != FINGERPRINT_ACKPACKET)
+	{
 		return FINGERPRINT_PACKETRECIEVER;
+	}
 	packet->type = pData[idx++];
 	packet->length = length;
 	idx += length;
@@ -365,9 +372,13 @@ uint8_t GetFromUart(fingerprintPacket *packet)
 
 	chkSum = packet->length + packet->type;
 	for (int i = 0; i < packet->length - 2; i++)
+	{
 		chkSum += packet->data[i];
+	}
 	if (chkSum != packet->Checksum)
+	{
 		return FINGERPRINT_BADPACKET;
+	}
 	printf("%s", packet->data);
 	return packet->data[0];
 }

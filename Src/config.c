@@ -6,7 +6,6 @@ int g_month;
 char g_url[MAX_URL_LENGTH];
 char g_url_new_employee[MAX_URL_LENGTH];
 char g_header[MAX_HEADER_LENGTH];
-char g_header_new_employee[MAX_HEADER_LENGTH];
 int g_max_retries;
 
 Status_t read_config(Config_t *config) 
@@ -44,12 +43,6 @@ Status_t read_config(Config_t *config)
         return FAILED;
     }
     if (fscanf(file, "HEADER %[^\n]\n", config->header) != SUCCESS)
-    {
-        syslog_log(LOG_ERR, __func__, "stderr", "Error reading HEADER from config file");
-        fclose(file);
-        return FAILED;
-    }
-        if (fscanf(file, "HEADER_NEW_EMPLOYEE %[^\n]\n", config->header_new_employee) != SUCCESS)
     {
         syslog_log(LOG_ERR, __func__, "stderr", "Error reading HEADER from config file");
         fclose(file);

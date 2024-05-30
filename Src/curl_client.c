@@ -11,7 +11,7 @@ pthread_mutex_t requestMutex = PTHREAD_MUTEX_INITIALIZER;
  * @param post_data The JSON data to send in the POST request.
  * @return 1 if the request was successful, 0 otherwise.
  */
-int send_request(const char *post_data, const char *URL, const char *HEADER) 
+int send_request(const char *post_data, const char *URL) 
 {
     printf("%s\r\n", __func__);
     CURL *curl;
@@ -19,19 +19,19 @@ int send_request(const char *post_data, const char *URL, const char *HEADER)
     int result = SUCCESS;
     long response_code;
 
-    //if (pthread_mutex_lock(&requestMutex) != MUTEX_OK) 
-    // {
-    //     // Обработка ошибки захвата мьютекса
-    //     printf("Failed to lock mutex: %s\n");
-    //     return FAILED;
-    // }
+    if (pthread_mutex_lock(&requestMutex) != MUTEX_OK) 
+    {
+        // Обработка ошибки захвата мьютекса
+        printf("Failed to lock mutex: %s\n");
+        return FAILED;
+    }
     printf("%s",post_data );
     curl = curl_easy_init();
     if (curl) 
     {
         struct curl_slist *headers = NULL;
         headers = curl_slist_append(headers, "Content-Type: application/json");
-        headers = curl_slist_append(headers, HEADER);
+        headers = curl_slist_append(headers, g_header);
 
 
         if (headers == NULL) 
@@ -72,7 +72,7 @@ int send_request(const char *post_data, const char *URL, const char *HEADER)
     else 
         result = FAILED; 
 
-    //pthread_mutex_unlock(&requestMutex);
+    pthread_mutex_unlock(&requestMutex);
     return result;
 }
 /**
@@ -95,12 +95,13 @@ Status_t send_json_data (int id, const char* event, int timestamp, const char* f
     cJSON_AddStringToObject(root, "fpm", fpm);  
 
     char *json_data = cJSON_Print(root);
-    int result = send_request(json_data, g_url,g_header);
+    int result = send_request(json_data, g_url);
     cJSON_Delete(root);
     free(json_data);
 
-    if (result)
+    if (result){
         return SUCCESS;
+    }
     return FAILED;
 }
 
@@ -129,7 +130,7 @@ Status_t send_json_new_employee (int id,int timestamp)
     }
     printf("json_data= %s\r\n",json_data);
     printf("URL %s\r\n",g_url_new_employee);
-    int result = send_request(json_data, g_url_new_employee, g_header_new_employee);
+    int result = send_request(json_data, g_url_new_employee);
     cJSON_Delete(root);
     free(json_data);
     if (result != SUCCESS)

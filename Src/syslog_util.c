@@ -57,12 +57,14 @@ void syslog_log(int priority, const char *function_name, const char *message_typ
     }
 
     if (message_len >= 0 && message_len < sizeof(log_message))
-
+    {
         syslog(priority, "%s", log_message); 
+    }
     else
+    {
         // Handle potential buffer overflow
         syslog(LOG_ERR, "[%s] Error: Message buffer overflow.", function_name);
-
+    }
     va_end(ap);
 }
 

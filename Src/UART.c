@@ -94,7 +94,9 @@ Status_t UART_read(int uart_fd,char *buffer, int size)
     {
         int bytes_read = read(uart_fd, buffer, size);
         if (bytes_read == size)
+        {
             return SUCCESS;
+        }
         else if (bytes_read == 0)
         {
              // Log a message if the UART input buffer is empty

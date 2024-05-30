@@ -305,7 +305,9 @@ void *clockThread(void *arg)
             int result = pthread_cond_timedwait(&displayCond, &displayMutex, &timeout);
             // If time has expired, exit the wait loop
             if (result == ETIMEDOUT) 
+            {
                 break;
+            }
         }
         lcd20x4_i2c_puts(0, 0, timeString);//Updates the display with the current time.
         pthread_mutex_unlock(&displayMutex);
@@ -333,7 +335,9 @@ void *socket_serverThread (void *arg)
         int client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &client_addr_len);
 
         if (client_socket < 0) 
+        {
             syslog_log(LOG_ERR, __func__, "strerror", "Error accepting connection: ", strerror(errno));
+        }
         else 
         {
             // Spawn a new thread to handle the client

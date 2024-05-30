@@ -80,7 +80,6 @@ int main()
     strncpy(g_url, config.url, MAX_URL_LENGTH);
     strncpy(g_url_new_employee, config.url_new_employee, MAX_URL_LENGTH);
     strncpy(g_header, config.header, MAX_HEADER_LENGTH);
-    strncpy(g_header_new_employee, config.header_new_employee, MAX_HEADER_LENGTH);
     g_max_retries = config.max_retries;
 
     // create or open database

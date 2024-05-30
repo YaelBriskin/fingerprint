@@ -10,7 +10,7 @@
 #include "defines.h"
 #include "config.h"
 
-int send_request(const char *post_data, const char *URL, const char *HEADER);
+int send_request(const char *post_data, const char *URL);
 Status_t send_json_data (int tz, const char* event, int timestamp, const char* fpm);
 Status_t send_json_new_employee (int id, int timestamp);
 #endif 

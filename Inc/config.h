@@ -29,7 +29,6 @@ extern int g_month;
 extern char g_url[MAX_URL_LENGTH];
 extern char g_url_new_employee[MAX_URL_LENGTH];
 extern char g_header[MAX_HEADER_LENGTH];
-extern char g_header_new_employee[MAX_HEADER_LENGTH];
 extern int g_max_retries;
 
 Status_t read_config(Config_t *config);
