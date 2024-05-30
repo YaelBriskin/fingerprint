@@ -67,11 +67,20 @@ int main()
     // Initialize I2C Display
   if (init() == SUCCESS && read_config(&config) == SUCCESS)
   {
+    // Initialize the cURL library globally
+    if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK) 
+    {
+        syslog_log(LOG_ERR, __func__, "strerror", "Could not initialize cURL", strerror(errno));
+        return EXIT_FAILURE;
+    }
+    emptyDatabase();
     // Initialize global variables
     g_server_port = config.server_port;
     g_month = config.month;
     strncpy(g_url, config.url, MAX_URL_LENGTH);
+    strncpy(g_url_new_employee, config.url_new_employee, MAX_URL_LENGTH);
     strncpy(g_header, config.header, MAX_HEADER_LENGTH);
+    strncpy(g_header_new_employee, config.header_new_employee, MAX_HEADER_LENGTH);
     g_max_retries = config.max_retries;
 
     // create or open database
@@ -84,29 +93,39 @@ int main()
     if (pthread_create(&thread_datetime, NULL, clockThread, NULL) != THREAD_OK)
     {
       syslog_log(LOG_ERR, __func__, "strerror", "Error creating displayThread thread", strerror(errno));
+      curl_global_cleanup();
       return THREAD_ERROR;
     }
     if (pthread_create(&thread_FPM, NULL, fingerPrintThread, NULL) != THREAD_OK)
     {
       syslog_log(LOG_ERR, __func__, "strerror", "Error creating fingerPrintThread thread", strerror(errno));
+      curl_global_cleanup();
       return THREAD_ERROR;
     }
     if (pthread_create(&thread_database, NULL, databaseThread, NULL) != THREAD_OK)
     {
       syslog_log(LOG_ERR, __func__, "strerror", "Error creating displayThread thread", strerror(errno));
+      curl_global_cleanup();
       return THREAD_ERROR;
     }
     if (pthread_create(&thread_socket, NULL, socket_serverThread, NULL) != THREAD_OK) 
     {
       syslog_log(LOG_ERR, __func__, "strerror", "Error creating socketThread thread", strerror(errno));
+      curl_global_cleanup();
       return THREAD_ERROR;
-  }
+    }
     // Wait for the thread to complete
     pthread_join(thread_datetime, NULL);
     pthread_join(thread_FPM, NULL);
     pthread_join(thread_database, NULL);
     pthread_join(thread_socket, NULL);
+
+    // Cleanup cURL library globally
+    curl_global_cleanup();
+
+    return EXIT_SUCCESS;
   }
   else
     syslog_close();
+    return EXIT_FAILURE;
 }

@@ -17,7 +17,9 @@ typedef struct
     int server_port;
     int month;
     char url[MAX_URL_LENGTH];
+    char url_new_employee[MAX_URL_LENGTH];
     char header[MAX_HEADER_LENGTH];
+    char header_new_employee[MAX_HEADER_LENGTH];
     int max_retries;
 } Config_t;
 
@@ -25,7 +27,9 @@ typedef struct
 extern int g_server_port;
 extern int g_month;
 extern char g_url[MAX_URL_LENGTH];
+extern char g_url_new_employee[MAX_URL_LENGTH];
 extern char g_header[MAX_HEADER_LENGTH];
+extern char g_header_new_employee[MAX_HEADER_LENGTH];
 extern int g_max_retries;
 
 Status_t read_config(Config_t *config);

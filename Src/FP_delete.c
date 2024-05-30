@@ -11,19 +11,20 @@
  */
 void deleteModel(uint16_t id_N)
 {
+	printf("%s\r\n", __func__);
 	lcd20x4_i2c_clear();
 	uint8_t ack;
 	ack = deleteTemplate(id_N);
 	switch (ack)
 	{
 	case FINGERPRINT_OK:
-		printf("Delete success\r\n");
+		syslog_log(LOG_ERR, __func__, "OK", "Delete success");
 		break;
 	case FINGERPRINT_PACKETRECIEVER:
-		printf("Error when receiving package\r\n");
+		syslog_log(LOG_ERR, __func__, "stderr", "Error when receiving package");
 		break;
 	case FINGERPRINT_DELETEFAIL:
-		printf("Faile to delete templates\r\n");
+		syslog_log(LOG_ERR, __func__, "stderr", "Faile to delete templates");
 		break;
 	default:;
 	}

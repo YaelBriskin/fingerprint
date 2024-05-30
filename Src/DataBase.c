@@ -252,10 +252,11 @@ void DB_delete(int ID)
 {
     if (pthread_mutex_lock(&databaseMutex) == MUTEX_OK) 
     {
+        printf("%s\r\n", __func__);
         char *sql_query = NULL;
         // Create SQL query for deletion
-        asprintf(&sql_query, "DELETE FROM employees WHERE ID = %d;", ID);
-        if (!sql_query) 
+        int ret = asprintf(&sql_query, "DELETE FROM employees WHERE ID = %d;", ID);
+        if (!sql_query || ret==-1) 
         {
             syslog_log(LOG_ERR, __func__, "format", "Memory allocation error");
             return;
@@ -267,6 +268,7 @@ void DB_delete(int ID)
         {
             syslog_log(LOG_ERR, __func__, "format", "Failed to prepare request: %s", sqlite3_errmsg(db_attendance));
             sqlite3_free(sql_query);  // Free allocated memory
+            pthread_mutex_unlock(&databaseMutex);
             return ;                 // Return error code
         }
 
@@ -276,8 +278,10 @@ void DB_delete(int ID)
             syslog_log(LOG_ERR, __func__, "format", "Failed to delete record: %s", sqlite3_errmsg(db_attendance));
             sqlite3_finalize(stmt);
             sqlite3_free(sql_query);
+            pthread_mutex_unlock(&databaseMutex);
             return ;
         }
+        printf("ID deleted from DB\r\n");
 
         sqlite3_finalize(stmt);
         sqlite3_free(sql_query);

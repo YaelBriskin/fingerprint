@@ -47,6 +47,14 @@ void syslog_log(int priority, const char *function_name, const char *message_typ
         const char *error_desc = va_arg(ap, const char*);
         message_len = snprintf(log_message, sizeof(log_message), "[%s] %s: %s", function_name, message, error_desc);
     }
+    else if (strcmp(message_type, "OK") == 0)
+    {
+        // Format message with error description from errno
+        char formatted_message[1000];
+        // Format the message with variable arguments
+        vsnprintf(formatted_message, sizeof(formatted_message), message, ap);        
+        message_len = snprintf(log_message, sizeof(log_message), "[%s] SUCCESS: %s", function_name, formatted_message);
+    }
 
     if (message_len >= 0 && message_len < sizeof(log_message))
 

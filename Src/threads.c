@@ -177,7 +177,7 @@ void *fingerPrintThread(void *arg)
             }
             displayLocked = LOCK;
             int ack=enrolling(id);//register a new fingerprint
-            if (ack)
+            if (ack==1)
             {
                 DB_newEmployee();//add a new employee to the database
                 char messageString[MESSAGE_LEN];
@@ -191,7 +191,7 @@ void *fingerPrintThread(void *arg)
                 while (retries < g_max_retries && send_json_new_employee(id, timestamp) != SUCCESS)
                 {
                     retries++;
-                    syslog_log(LOG_ERR, __func__, "strerror", "Failed to send new employee data, retrying...", strerror(errno));
+                    syslog_log(LOG_ERR, __func__, "strerror", "Failed to send new employee data, retrying... %d", strerror(errno),retries);
                     sleep(1); // Add some delay between retries if necessary
                 }
                 if (retries == g_max_retries)
@@ -242,6 +242,7 @@ void *databaseThread(void *arg)
     int count = 0;
     while (1)
     {
+        printf("%s\r\n", __func__);
         int fd_led = GPIO_open(GPIO_LED_RED,O_WRONLY);
         //checks whether there is data in the database that has not yet been sent and 
         //if there is any, it sends it to the server
@@ -249,8 +250,10 @@ void *databaseThread(void *arg)
         {
             //if it fails to send data 10 times in a row, the LED will light up
             if (++count == g_max_retries)
+            {
                 //led on
                 GPIO_write(fd_led,LED_ON);
+            }
 
         }
         else
@@ -283,7 +286,9 @@ void *clockThread(void *arg)
 
         // If the day has changed since the last check, it deletes old records from the database.
         if (lastDay != -1 && lastDay != timeinfo->tm_mday)
+        {
             DB_delete_old_records(rawtime);
+        }
 
         //Updates the last checked day
         lastDay = timeinfo->tm_mday;

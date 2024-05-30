@@ -163,8 +163,10 @@ uint8_t image2Tz(uint8_t slot)
 	@returns <code>FINGERPRINT_ENROLLMISMATCH</code> on mismatch of fingerprints
 */
 /**************************************************************************/
-uint8_t createModel(void){
-	SEND_CMD_PACKET(FINGERPRINT_REGMODEL)}
+uint8_t createModel(void)
+{
+	SEND_CMD_PACKET(FINGERPRINT_REGMODEL)
+}
 /**************************************************************************/
 /*!
 	@brief   Ask the sensor to store the calculated model for later matching
