@@ -54,9 +54,6 @@ Status_t init()
     syslog_log(LOG_ERR, __func__, "strerror", "UART4 initialization failed", strerror(errno));
     return FAILED;
   }
-  printf("GPIO initialization successful!\n");
-  printf("LCD initialization successful!\n");
-  printf("UART initialization successful!\n");
   return SUCCESS;
 }
 int main()
@@ -73,7 +70,8 @@ int main()
         syslog_log(LOG_ERR, __func__, "strerror", "Could not initialize cURL", strerror(errno));
         return EXIT_FAILURE;
     }
-    emptyDatabase();
+    //
+    //emptyDatabase();
     // Initialize global variables
     g_server_port = config.server_port;
     g_month = config.month;

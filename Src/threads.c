@@ -61,10 +61,10 @@ void *fingerPrintThread(void *arg)
             displayLocked = LOCK;
             int id = findFinger(HELLO);//scan fingerprint
             timestamp = getCurrent_UTC_Timestamp();//get current date and time in UTC format
-            if (id)
+            if (id > 0)
             {		
                 buzzer();//turn on the buzzer
-		        sleep(SLEEP_LCD);   
+		       // sleep(SLEEP_LCD);   
                 //write to database
                 for (int attempts = 0; attempts < g_max_retries; attempts++) 
                 {
@@ -116,13 +116,13 @@ void *fingerPrintThread(void *arg)
                 syslog_log(LOG_ERR, __func__, "strerror", "Error locking mutex", strerror(errno));
                 break;
             }
-            displayLocked = LOCK;            
+            displayLocked = LOCK;  
             int id = findFinger(GOODBYE);//scan fingerprint
             timestamp = getCurrent_UTC_Timestamp();//get current date and time in UTC format
-            if (id)
+            if (id > 0)
             {
                 buzzer();//turn on the buzzer
-		        sleep(SLEEP_LCD); 
+		        //sleep(SLEEP_LCD); 
                 //write to database
                 for (int attempts = 0; attempts < g_max_retries; attempts++) 
                 {
@@ -242,11 +242,10 @@ void *databaseThread(void *arg)
     int count = 0;
     while (1)
     {
-        printf("%s\r\n", __func__);
         int fd_led = GPIO_open(GPIO_LED_RED,O_WRONLY);
         //checks whether there is data in the database that has not yet been sent and 
         //if there is any, it sends it to the server
-        if (DB_find()== ERROR)
+        if (DB_find()!= 1)
         {
             //if it fails to send data 10 times in a row, the LED will light up
             if (++count == g_max_retries)
@@ -375,9 +374,6 @@ void *handle_clientThread(void *arg)
         } 
         else 
         {
-            // Process received data
-            printf("Received %d bytes from client %d\n", received_bytes, client_socket);
-    
             //remove the received fingerprint from the database
             deleteModel(client_id);
             DB_delete(client_id);

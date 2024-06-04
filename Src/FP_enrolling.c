@@ -67,6 +67,8 @@ int enrolling(uint16_t pageId)
             previous_ack = ack; // Update previous_ack for next iteration
         }
     }
+    sleep(SLEEP_LCD);
+	lcd20x4_i2c_clear();
     ack = ERROR;
     while (ack != FINGERPRINT_OK)
     {
@@ -105,8 +107,12 @@ int enrolling(uint16_t pageId)
     while (getImage() != FINGERPRINT_NOFINGER)
         ;
     ack = FINGERPRINT_NOFINGER;
-    lcd20x4_i2c_puts(1, 0, "Put finger to enroll again");
+    lcd20x4_i2c_puts(1, 0, "Remove your finger from the sensor");
     sleep(SLEEP_LCD);
+    lcd20x4_i2c_clear();
+    lcd20x4_i2c_puts(1, 0, "Put your finger down again");
+    sleep(SLEEP_LCD);
+    lcd20x4_i2c_clear();
     previous_ack = -1;
     // Re-enrollment process
     while (ack != FINGERPRINT_OK)

@@ -53,7 +53,7 @@ int send_request(const char *post_data, const char *URL)
         res = curl_easy_perform(curl);
         // Check the server response status code
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-         printf("\r\nResponse code: %ld\n", response_code);
+         //printf("\r\nResponse code: %ld\n", response_code);
         // Check the success of the request
         if (res != CURLE_OK) 
         {
@@ -128,8 +128,8 @@ Status_t send_json_new_employee (int id,int timestamp)
         cJSON_Delete(root);
         return FAILED;
     }
-    printf("json_data= %s\r\n",json_data);
-    printf("URL %s\r\n",g_url_new_employee);
+    //printf("json_data= %s\r\n",json_data);
+    //printf("URL %s\r\n",g_url_new_employee);
     int result = send_request(json_data, g_url_new_employee);
     cJSON_Delete(root);
     free(json_data);
