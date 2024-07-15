@@ -6,7 +6,6 @@
 void syslog_init()
 {
     extern const char *__progname;
-    printf("syslog_init()  %s\n",__progname);
     openlog(__progname, LOG_PID | LOG_CONS, LOG_FACILITY);
 }
 

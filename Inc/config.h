@@ -8,10 +8,6 @@
 #include "defines.h"
 #include "syslog_util.h"
 
-#define MAX_URL_LENGTH 256
-#define MAX_HEADER_LENGTH 50
-#define CONFIG_NAME "config.conf"
-
 typedef struct 
 {
     int server_port;
@@ -21,6 +17,8 @@ typedef struct
     char header[MAX_HEADER_LENGTH];
     char header_new_employee[MAX_HEADER_LENGTH];
     int max_retries;
+    int db_sleep;
+    char file_name[MAX_FILENAME_LENGTH];
 } Config_t;
 
 // Declare global variables
@@ -30,6 +28,8 @@ extern char g_url[MAX_URL_LENGTH];
 extern char g_url_new_employee[MAX_URL_LENGTH];
 extern char g_header[MAX_HEADER_LENGTH];
 extern int g_max_retries;
+extern int g_db_sleep;
+extern char g_file_name[MAX_FILENAME_LENGTH];
 
 Status_t read_config(Config_t *config);
 

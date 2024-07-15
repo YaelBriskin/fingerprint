@@ -13,7 +13,6 @@ pthread_mutex_t requestMutex = PTHREAD_MUTEX_INITIALIZER;
  */
 int send_request(const char *post_data, const char *URL) 
 {
-    printf("%s\r\n", __func__);
     CURL *curl;
     CURLcode res;
     int result = SUCCESS;
@@ -21,11 +20,10 @@ int send_request(const char *post_data, const char *URL)
 
     if (pthread_mutex_lock(&requestMutex) != MUTEX_OK) 
     {
-        // Обработка ошибки захвата мьютекса
-        printf("Failed to lock mutex: %s\n");
+        // Handle mutex acquisition error
+        saveToFile(__func__, "Failed to unlock mutex");
         return FAILED;
     }
-    printf("%s",post_data );
     curl = curl_easy_init();
     if (curl) 
     {
@@ -53,7 +51,6 @@ int send_request(const char *post_data, const char *URL)
         res = curl_easy_perform(curl);
         // Check the server response status code
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-         //printf("\r\nResponse code: %ld\n", response_code);
         // Check the success of the request
         if (res != CURLE_OK) 
         {
@@ -116,7 +113,6 @@ Status_t send_json_data (int id, const char* event, int timestamp, const char* f
  */
 Status_t send_json_new_employee (int id,int timestamp)
 {   
-    printf("%s\r\n", __func__);
     cJSON *root = cJSON_CreateObject();
     cJSON_AddNumberToObject(root, "id", id);
     cJSON_AddNumberToObject(root, "timestamp", timestamp);
@@ -128,14 +124,11 @@ Status_t send_json_new_employee (int id,int timestamp)
         cJSON_Delete(root);
         return FAILED;
     }
-    //printf("json_data= %s\r\n",json_data);
-    //printf("URL %s\r\n",g_url_new_employee);
     int result = send_request(json_data, g_url_new_employee);
     cJSON_Delete(root);
     free(json_data);
     if (result != SUCCESS)
     {
-        fprintf(stderr, "Failed to send request.\n");
         syslog_log(LOG_ERR, __func__, "strerror", "Failed to send request.", strerror(errno));
         return FAILED;
     }

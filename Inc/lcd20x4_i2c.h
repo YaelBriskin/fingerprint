@@ -10,7 +10,6 @@
 #include "I2C.h"
 #include "defines.h"
 
-
 bool lcd20x4_i2c_init();
 void lcd20x4_i2c_setCursor(uint8_t row, uint8_t col);
 void lcd20x4_i2c_1stLine(void);
@@ -34,6 +33,8 @@ void lcd20x4_i2c_shiftLeft(uint8_t offset);
 void lcd20x4_i2c_printf(const char* str, ...);
 void lcd20x4_i2c_puts(uint8_t x, uint8_t y, const char* str);
 
+#define LCD_BIT_FUNCTION_8_BIT_MODE ((1 << 5U) | (1 << 4U))
+#define LCD_BIT_FUNCTION_4_BIT_MODE ((1 << 5U) | (0 << 4U))
 /* LCD Commands */
 #define LCD_CLEARDISPLAY    0x01
 #define LCD_RETURNHOME      0x02

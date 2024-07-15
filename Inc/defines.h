@@ -1,6 +1,7 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
+#define CANCEL 0
 #define ERROR -1
 #define MUTEX_OK 0
 #define MUTEX_ERROR 1
@@ -15,9 +16,10 @@
 #define BUZZER_OFF 0
 #define LOCK 1
 #define UNLOCK 0
-#define SLEEP_LCD 2
-#define SLEEP_DURATION 3
-#define DATABASE_SLEEP_DURATION 120
+#define SLEEP_LCD 3
+#define SLEEP_DURATION 4
+#define ONE_MINUTE 60 1
+
 #define TRUE "true"
 #define FALSE "false"
 #define IN "in"
@@ -28,6 +30,14 @@
 #define TIME_STR_LEN 20
 
 #define MESSAGE_LEN 50
+
+#define MAX_LOG_MESSAGE_LENGTH 256
+#define MAX_URL_LENGTH 256
+#define MAX_HEADER_LENGTH 50
+#define MAX_FILENAME_LENGTH 256
+
+
+#define CONFIG_NAME "config.conf"
 
 typedef enum {
     FAILED = 0,

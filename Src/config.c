@@ -7,6 +7,8 @@ char g_url[MAX_URL_LENGTH];
 char g_url_new_employee[MAX_URL_LENGTH];
 char g_header[MAX_HEADER_LENGTH];
 int g_max_retries;
+int g_db_sleep;
+char g_file_name[MAX_FILENAME_LENGTH];
 
 Status_t read_config(Config_t *config) 
 {
@@ -54,7 +56,18 @@ Status_t read_config(Config_t *config)
         fclose(file);
         return FAILED;
     }
-
+    if (fscanf(file, "DATABASE_SLEEP_DURATION %d\n", &config->db_sleep) != SUCCESS)
+    {
+        syslog_log(LOG_ERR, __func__, "stderr", "Error reading DATABASE_SLEEP_DURATION from config file");
+        fclose(file);
+        return FAILED;
+    }
+    if (fscanf(file, "FILE_NAME %s\n", config->file_name) != SUCCESS)
+    {
+        syslog_log(LOG_ERR, __func__, "stderr", "Error reading FILE_NAME from config file");
+        fclose(file);
+        return FAILED;
+    }
     fclose(file);
     return SUCCESS;
 }

@@ -39,32 +39,35 @@ void lcd20x4_i2c_sendData(uint8_t data)
  */
 bool lcd20x4_i2c_init()
 {
-  usleep(50000);
+  //usleep(50000);
   if (I2C_Init() != SUCCESS)
     return false;
   // Initialise LCD for 4-bit operation
   // 1. Wait at least 15ms
-  usleep(45000);
+  //usleep(45000);
+  usleep(60000);  // wait for >40ms
   // 2. Attentions sequence
-  lcd20x4_i2c_sendCommand(0x30);
-  usleep(5000);
-  lcd20x4_i2c_sendCommand(0x30);
-  usleep(1000);
-  lcd20x4_i2c_sendCommand(0x30);
-  usleep(8000);
-  lcd20x4_i2c_sendCommand(0x20);
-  usleep(8000);
+  lcd20x4_i2c_sendCommand(LCD_BIT_FUNCTION_8_BIT_MODE);
+  usleep(5000); // wait for >4.1ms
+  lcd20x4_i2c_sendCommand(LCD_BIT_FUNCTION_8_BIT_MODE);
+  usleep(1000); // wait for >100us
+  lcd20x4_i2c_sendCommand(LCD_BIT_FUNCTION_8_BIT_MODE);
+  usleep(10000);
+  lcd20x4_i2c_sendCommand(LCD_BIT_FUNCTION_4_BIT_MODE);
+  usleep(10000);
 
   lcd20x4_i2c_sendCommand(LCD_FUNCTIONSET | LCD_FUNCTION_N);
   usleep(1000);
   lcd20x4_i2c_sendCommand(LCD_DISPLAYCONTROL);
   usleep(1000);
   lcd20x4_i2c_sendCommand(LCD_CLEARDISPLAY);
-  usleep(3000);
+  //usleep(3000);
+  usleep(1000);
   lcd20x4_i2c_sendCommand(0x04 | LCD_ENTRY_ID);
   usleep(1000);
   lcd20x4_i2c_sendCommand(LCD_DISPLAYCONTROL | LCD_DISPLAY_D);
-  usleep(3000);
+  //usleep(3000);
+  usleep(1000);
 
   return true;
 }

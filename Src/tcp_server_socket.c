@@ -79,6 +79,8 @@ Status_t read_data_from_client(int client_socket, int *client_id)
         syslog_log(LOG_ERR, __func__, "strerror", "Error Invalid data format from client", strerror(errno));
         return FAILED;
     }
-    printf("Received client ID for deletion: %d\n", client_id);
+    char log_message[MAX_LOG_MESSAGE_LENGTH];
+    snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Received client ID for deletion: %d", client_id);\
+    writeToFile(__func__,log_message);
     return SUCCESS;
 }

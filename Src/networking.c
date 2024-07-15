@@ -15,6 +15,6 @@
 //         perror("Error setting up gateway");
 //         exit(EXIT_FAILURE);
 //     }
-//     printf("The network interface has been successfully configured.\n");
+//      writeToFile(__func__,"The network interface has been successfully configured.");
 //     return 0;
 // }

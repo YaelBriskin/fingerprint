@@ -19,7 +19,8 @@ void beginDisplay()
     code[MAX_LENGTH_ID] = '\0';
     lcd20x4_i2c_print(0, 0, "Enter ID: ");
     lcd20x4_i2c_print(1, 9, code);
-    lcd20x4_i2c_print(3, 0, "* delete  # confirm");
+    lcd20x4_i2c_print(2, 0, "* delete/cancel");
+    lcd20x4_i2c_print(3, 0, "# confirm");
     
 }
 /**
@@ -36,7 +37,7 @@ int enter_ID_keypad()
     struct timespec start_time;
     const int max_execution_time = 60;// Maximum time allowed for input in seconds
     struct timespec current_time;
-
+    int star_count = 0; 
     uint8_t rx_buffer;
     int digit_count = 0;
     int attempts = 0;
@@ -71,11 +72,41 @@ int enter_ID_keypad()
                     // Update LCD display
                     lcd20x4_i2c_print(1, 9, code);
                 }
-                else if (character == '*' && digit_count > 0)
+                else if (character == '*')
                 {
-                    code[--digit_count] = '_';
-                    // Update LCD display
-                    lcd20x4_i2c_print(1, 9, code);
+                    if(digit_count > 0)
+                    {
+                        code[--digit_count] = '_';
+                        // Update LCD display
+                        lcd20x4_i2c_print(1, 9, code);
+                    }
+                    else
+                    {
+                        lcd20x4_i2c_clear();
+                        lcd20x4_i2c_puts(1, 0, "cancel the operation?");
+                        lcd20x4_i2c_puts(2, 0, "* yes   # no");
+                        while (1)
+                        {
+                            if (UART_read(uart4_fd, &rx_buffer, 1) == SUCCESS)
+                            {
+                                character = convert_to_char(rx_buffer);
+                                if (character == '*') // Пользователь выбрал "Да"
+                                {
+                                    lcd20x4_i2c_clear();
+                                    return CANCEL;
+                                }
+                                else if (character == '#') // Пользователь выбрал "Нет"
+                                {
+                                    lcd20x4_i2c_clear();
+                                    beginDisplay();
+                                    lcd20x4_i2c_print(1, 9, code);
+                                    break;
+                                }
+                            }
+                            usleep(100000);
+                        }
+                        lcd20x4_i2c_clear();
+                    }
                 }
                 else if (character == '#')
                 {
@@ -114,40 +145,28 @@ char convert_to_char(uint8_t value)
     switch (value)
     {
     case 0xE1:
-        printf("1 ");
         return '1';
     case 0xE2:
-        printf("2 ");
         return '2';
     case 0xE3:
-        printf("3 ");
         return '3';
     case 0xE4:
-        printf("4 ");
         return '4';
     case 0xE5:
-        printf("5 ");
         return '5';
     case 0xE6:
-        printf("6 ");
         return '6';
     case 0xE7:
-        printf("7 ");
         return '7';
     case 0xE8:
-        printf("8 ");
         return '8';
     case 0xE9:
-        printf("9 ");
         return '9';
     case 0xEA:
-        printf("* ");
         return '*';
     case 0xEB:
-        printf("0 ");
         return '0';
     case 0xEC:
-        printf("# ");
         return '#';
     default:
         return '\0';  // Return null character for invalid input

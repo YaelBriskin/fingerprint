@@ -8,7 +8,8 @@ void display_route(const char *message)
     if (strcmp(message, "Hello") == 0) 
 	{
 		lcd20x4_i2c_puts(3, 0, "sign in");
-    } else 
+    } 
+	else 
 	{
 		lcd20x4_i2c_puts(3, 0, "sign out");
     }
@@ -22,7 +23,9 @@ int stringToInt(const char *str)
 	while (str[i] != '\0')
 	{
 		if (str[i] >= '0' && str[i] <= '9')
+		{
 			result = result * 10 + (str[i] - '0');
+		}
 		else
 		{
 			// Handle invalid characters
@@ -54,7 +57,7 @@ int findFinger(const char *message)
 	int ack = -1;
 	int previous_ack = -1;
 	lcd20x4_i2c_puts(1, 0, "Waiting finger to enroll");
-	sleep(2);
+	sleep(SLEEP_DURATION);
 	clock_gettime(CLOCK_MONOTONIC, &start_time);
 
 	// Main loop for scanning the fingerprint
@@ -101,7 +104,7 @@ int findFinger(const char *message)
 			}
 			previous_ack = ack; // Update previous_ack for next iteration
 		}
-		usleep(100);
+		usleep(DELAY);
 	}
 	// to generate character file from the original finger image in ImageBuffer and store the file in CharBuffer1 or CharBuffer2.
 	sleep(SLEEP_LCD);

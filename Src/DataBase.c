@@ -16,7 +16,6 @@ int getNextAvailableID()
     if (sqlite3_prepare_v2(db_attendance, query, -1, &stmt, NULL) != SQLITE_OK) 
     {
         syslog_log(LOG_ERR, __func__, "format", "Failed to execute query: %s", sqlite3_errmsg(db_attendance));
-        //printf("Failed to execute query: %s\n", sqlite3_errmsg(db_attendance));
         return id;
     }
 
@@ -89,7 +88,6 @@ void DB_open()
  */
 void DB_newEmployee()
 {
-    printf("DB_newEmployee()\r\n");
     if (pthread_mutex_lock(&databaseMutex) == MUTEX_OK)
     {
         sqlite3_stmt *stmt;
@@ -252,7 +250,6 @@ void DB_delete(int ID)
 {
     if (pthread_mutex_lock(&databaseMutex) == MUTEX_OK) 
     {
-        printf("%s\r\n", __func__);
         char *sql_query = NULL;
         // Create SQL query for deletion
         int ret = asprintf(&sql_query, "DELETE FROM employees WHERE ID = %d;", ID);
@@ -281,8 +278,7 @@ void DB_delete(int ID)
             pthread_mutex_unlock(&databaseMutex);
             return ;
         }
-        printf("ID deleted from DB\r\n");
-
+        writeToFile(__func__,"ID deleted from DB");
         sqlite3_finalize(stmt);
         sqlite3_free(sql_query);
         pthread_mutex_unlock(&databaseMutex);

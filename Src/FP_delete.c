@@ -11,7 +11,6 @@
  */
 void deleteModel(uint16_t id_N)
 {
-	printf("%s\r\n", __func__);
 	lcd20x4_i2c_clear();
 	uint8_t ack;
 	ack = deleteTemplate(id_N);

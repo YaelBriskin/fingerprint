@@ -20,8 +20,6 @@
 #define I2C_BUS "/dev/i2c-2" 
 #define I2C_ADDRESS 0x27 
 
-#define MAX_RETRIES 10
-
 Status_t I2C_Init();
 void I2C_write(uint8_t *buffer, int size);
 void I2C_close();
