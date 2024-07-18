@@ -8,6 +8,7 @@
 #include <cjson/cJSON.h>
 #include <pthread.h>
 #include "defines.h"
+#include "file_utils.h"
 #include "config.h"
 
 int send_request(const char *post_data, const char *URL);

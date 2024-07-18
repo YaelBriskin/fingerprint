@@ -21,7 +21,7 @@ int send_request(const char *post_data, const char *URL)
     if (pthread_mutex_lock(&requestMutex) != MUTEX_OK) 
     {
         // Handle mutex acquisition error
-        saveToFile(__func__, "Failed to unlock mutex");
+        writeToFile(__func__, "Failed to unlock mutex");
         return FAILED;
     }
     curl = curl_easy_init();

@@ -7,12 +7,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include "../Inc/curl_client.h"
-#include "../Inc/syslog_util.h"
-#include "../Inc/defines.h"
+#include "curl_client.h"
+#include "syslog_util.h"
+#include "defines.h"
 #include "config.h"
-
-#define MONTH 2
 
 void DB_open();
 void DB_newEmployee();
@@ -23,5 +21,6 @@ void DB_update(int id);
 void DB_delete(int ID);
 void DB_delete_old_records(time_t lastDay);
 int getNextAvailableID();
+int DB_check_id_exists(int id);
 
 #endif  // DATABASE_H

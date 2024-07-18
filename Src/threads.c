@@ -1,12 +1,13 @@
 #include "../Inc/threads.h"
+
+
 //-------------display
-pthread_mutex_t displayMutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t displayCond = PTHREAD_COND_INITIALIZER;
+extern pthread_mutex_t displayMutex;
+extern pthread_cond_t displayCond;
+extern int displayLocked;
 //-------------database
 pthread_cond_t databaseCond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t databaseMutex = PTHREAD_MUTEX_INITIALIZER;
-
-int displayLocked = UNLOCK;
 
 /**
  * @brief This function returns the current time in UTC format as an integer timestamp.
@@ -103,13 +104,13 @@ void *clockThread(void *arg)
         lastDay = timeinfo->tm_mday;
 
         char timeString[TIME_STR_LEN] = {'\0'};
-        strftime(timeString, TIME_STR_LEN, "%X %d/%m/%y", timeinfo);
+        strftime(timeString, TIME_STR_LEN, "%H:%M %d/%m/%y", timeinfo);
         pthread_mutex_lock(&displayMutex);
         while (displayLocked) 
         {            
             //pthread_cond_wait(&displayCond, &displayMutex);
             clock_gettime(CLOCK_REALTIME, &timeout);
-            timeout.tv_sec += ONE_MINUTE;
+            timeout.tv_sec += 1;
             // Wait for a signal or timer to expire
             int result = pthread_cond_timedwait(&displayCond, &displayMutex, &timeout);
             // If time has expired, exit the wait loop
@@ -119,6 +120,10 @@ void *clockThread(void *arg)
             }
         }
         lcd20x4_i2c_puts(0, 0, timeString);//Updates the display with the current time.
+        lcd20x4_i2c_puts(2, 0, g_lcd_message); 
+        clock_gettime(CLOCK_REALTIME, &timeout);
+        timeout.tv_sec += ONE_MINUTE;  
+        pthread_cond_timedwait(&displayCond, &displayMutex, &timeout);
         pthread_mutex_unlock(&displayMutex);
     }
 }

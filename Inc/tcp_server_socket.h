@@ -10,8 +10,8 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <syslog.h>
-#include "../Inc/FP_delete.h"
-#include "../Inc/DataBase.h"
+#include "FP_delete.h"
+#include "DataBase.h"
 #include "defines.h"
 #include "config.h"
 

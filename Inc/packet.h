@@ -78,13 +78,6 @@
 #define TIMEOUT 3000
 #define ADDRESS_LEN 4
 
-/// Соответствующее местоположение, которое установлено fingerFastSearch ()
-uint8_t fingerID[2];
-/// Достоверность соответствия fingerFastSearch (), более высокие числа - больше уверенности
-uint16_t confidence;
-/// Количество хранимых шаблонов в датчике, установленное getTemplateCount ()
-uint16_t templateCount;
-
 ///! Вспомогательный класс для создания пакетов UART
 typedef struct
 {

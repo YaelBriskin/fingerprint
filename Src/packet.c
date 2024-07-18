@@ -12,7 +12,12 @@ protocol[][][]...
  */
 ReadSysPara parameters;
 extern int uart2_fd;
-
+/// Соответствующее местоположение, которое установлено fingerFastSearch ()
+uint8_t fingerID[2];
+/// Достоверность соответствия fingerFastSearch (), более высокие числа - больше уверенности
+uint16_t confidence;
+/// Количество хранимых шаблонов в датчике, установленное getTemplateCount ()
+uint16_t templateCount;
 /*!
  * @brief Gets the command packet
  */

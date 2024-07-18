@@ -1,6 +1,8 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
+#include "file_utils.h"
+
 #define CANCEL 0
 #define ERROR -1
 #define MUTEX_OK 0
@@ -18,7 +20,8 @@
 #define UNLOCK 0
 #define SLEEP_LCD 3
 #define SLEEP_DURATION 4
-#define ONE_MINUTE 60 1
+#define ONE_MINUTE 60 
+#define MONTH 2
 
 #define TRUE "true"
 #define FALSE "false"
@@ -35,6 +38,7 @@
 #define MAX_URL_LENGTH 256
 #define MAX_HEADER_LENGTH 50
 #define MAX_FILENAME_LENGTH 256
+#define MAX_LCD_MESSAGE_LENGTH 20
 
 
 #define CONFIG_NAME "config.conf"

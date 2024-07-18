@@ -45,7 +45,7 @@ bool lcd20x4_i2c_init()
   // Initialise LCD for 4-bit operation
   // 1. Wait at least 15ms
   //usleep(45000);
-  usleep(60000);  // wait for >40ms
+  usleep(50000);  // wait for >40ms
   // 2. Attentions sequence
   lcd20x4_i2c_sendCommand(LCD_BIT_FUNCTION_8_BIT_MODE);
   usleep(5000); // wait for >4.1ms
