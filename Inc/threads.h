@@ -17,18 +17,15 @@
 #include "lcd20x4_i2c.h"
 #include "keypad.h"
 #include "curl_client.h"
-#include "tcp_server_socket.h"
 #include "defines.h"
 #include "config.h"
 
+//---functions
 int getCurrent_UTC_Timestamp();
 void buzzer();
-void* fingerPrintThread(void* arg);
+//---threads
 void* databaseThread(void* arg);
 void *clockThread(void *arg);
-void *resetDatabaseThread(void *arg);
-void *handle_clientThread(void *arg);
-void *socket_serverThread (void *arg);
-
+void *post_requestThread(void *arg);
 
 #endif  // THREADS_H

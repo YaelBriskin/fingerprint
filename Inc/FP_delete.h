@@ -7,5 +7,5 @@
 #include "../Inc/lcd20x4_i2c.h"
 #include <time.h>
 
-void deleteModel(uint16_t id_N);
+int deleteModel(uint16_t id_N);
 #endif /* FP_DELETE_H */

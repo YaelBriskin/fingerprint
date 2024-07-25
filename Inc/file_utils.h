@@ -4,8 +4,12 @@
 #include "../Inc/syslog_util.h"
 #include <stdio.h>
 
-void initFile();
-void writeToFile(const char *func_name, const char *error_message);
-void closeFile();
+
+extern FILE *file_global;
+extern FILE *file_URL;
+
+void initFile(FILE **file, const char *file_name);
+void writeToFile(FILE *file, const char *func_name, const char *message);
+void closeFile(FILE *file);
 
 #endif // FILE_UTILS_H

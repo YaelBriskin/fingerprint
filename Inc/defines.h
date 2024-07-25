@@ -22,6 +22,7 @@
 #define SLEEP_DURATION 4
 #define ONE_MINUTE 60 
 #define MONTH 2
+#define CHECK_INTERVAL (24 * 60 * 60) // 24 hours in seconds
 
 #define TRUE "true"
 #define FALSE "false"

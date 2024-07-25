@@ -5,11 +5,14 @@ int g_server_port;
 int g_month;
 char g_url[MAX_URL_LENGTH];
 char g_url_new_employee[MAX_URL_LENGTH];
+char g_url_delete_employee[MAX_URL_LENGTH];
+char g_url_check_delete[MAX_URL_LENGTH];
 char g_header[MAX_HEADER_LENGTH];
 int g_max_retries;
 int g_db_sleep;
 char g_file_name[MAX_FILENAME_LENGTH];
 char g_lcd_message[MAX_LCD_MESSAGE_LENGTH];
+
 
 Status_t read_config(Config_t *config) 
 {
@@ -41,7 +44,19 @@ Status_t read_config(Config_t *config)
     }
     if (fscanf(file, "URL_NEW_EMPLOYEE %s\n", config->url_new_employee) != SUCCESS)
     {
-        syslog_log(LOG_ERR, __func__, "stderr", "Error reading URL from config file");
+        syslog_log(LOG_ERR, __func__, "stderr", "Error reading URL_NEW_EMPLOYEE from config file");
+        fclose(file);
+        return FAILED;
+    }
+    if (fscanf(file, "URL_DELETE_EMPLOYEE %s\n", config->url_delete_employee) != SUCCESS)
+    {
+        syslog_log(LOG_ERR, __func__, "stderr", "Error reading URL_DELETE_EMPLOYEE from config file");
+        fclose(file);
+        return FAILED;
+    }
+    if (fscanf(file, "URL_CHECK_DELETE %s\n", config->url_check_delete) != SUCCESS)
+    {
+        syslog_log(LOG_ERR, __func__, "stderr", "Error reading URL_CHECK_DELETE from config file");
         fclose(file);
         return FAILED;
     }

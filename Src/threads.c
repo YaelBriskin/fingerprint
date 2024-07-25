@@ -1,13 +1,19 @@
 #include "../Inc/threads.h"
 
+// Flag to stop threads
+extern volatile sig_atomic_t stop;
 
 //-------------display
 extern pthread_mutex_t displayMutex;
 extern pthread_cond_t displayCond;
-extern int displayLocked;
+
 //-------------database
 pthread_cond_t databaseCond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t databaseMutex = PTHREAD_MUTEX_INITIALIZER;
+
+//-------------POST request
+pthread_cond_t requestCond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t requestMutex = PTHREAD_MUTEX_INITIALIZER;
 
 /**
  * @brief This function returns the current time in UTC format as an integer timestamp.
@@ -20,9 +26,11 @@ int getCurrent_UTC_Timestamp()
     time_t current_time = time(NULL);
     return (int)current_time;
 }
+
 /**
  * @brief This function activates a buzzer for a short duration.
  *
+ * This function turns on a buzzer, waits for a predefined short duration, and then turns off the buzzer.
  */
 void buzzer()
 {
@@ -32,11 +40,13 @@ void buzzer()
     GPIO_write(fd_buzzer,BUZZER_OFF);
     GPIO_close(GPIO_BUZZER);
 }
+
 /**
  * @brief This function runs in a separate thread to periodically check for unsent data in the database and send it to the server.
  *
  * The function operates in an infinite loop, checking every two minutes if there is data in the database that has not been sent.
- *  - Sleeps for 600 seconds before repeating the process.
+ * If it fails to send data 10 times in a row, it turns on a LED indicator.
+ *
  * @param arg Unused parameter.
  * @return Always returns NULL.
  */
@@ -45,7 +55,7 @@ void *databaseThread(void *arg)
     int count = 0;
     struct timespec timeout;
 
-    while (1)
+    while (!stop)
     {
         int fd_led = GPIO_open(GPIO_LED_RED,O_WRONLY);
         //checks whether there is data in the database that has not yet been sent and 
@@ -63,11 +73,10 @@ void *databaseThread(void *arg)
         else
         {
             count = 0;
-            //led off
+            // Turn off the LED if data is sent successfully
             GPIO_write(fd_led,LED_OFF);
         }
         GPIO_close(GPIO_LED_RED);
-        //sleep(DATABASE_SLEEP_DURATION);
         clock_gettime(CLOCK_REALTIME, &timeout);
         timeout.tv_sec += g_db_sleep;  
 
@@ -75,10 +84,15 @@ void *databaseThread(void *arg)
         pthread_cond_timedwait(&databaseCond, &databaseMutex, &timeout);
         pthread_mutex_unlock(&databaseMutex);
     }
-    return NULL;
+    pthread_exit(NULL);
 }
+
 /**
  * @brief This function runs in a separate thread to update the display with the current time and manage database records.
+ *
+ * This function updates the LCD display with the current time and manages old records in the database.
+ * It waits for a signal or a timeout to update the display.
+ *
  * @param arg Unused parameter.
  * @return Always returns NULL.
  */
@@ -87,7 +101,7 @@ void *clockThread(void *arg)
     struct timespec timeout;
     int lastDay = -1;
 
-    while (1)
+    while (!stop)
     {
         time_t rawtime;
         struct tm *timeinfo;
@@ -106,7 +120,7 @@ void *clockThread(void *arg)
         char timeString[TIME_STR_LEN] = {'\0'};
         strftime(timeString, TIME_STR_LEN, "%H:%M %d/%m/%y", timeinfo);
         pthread_mutex_lock(&displayMutex);
-        while (displayLocked) 
+        while (!stop) 
         {            
             //pthread_cond_wait(&displayCond, &displayMutex);
             clock_gettime(CLOCK_REALTIME, &timeout);
@@ -119,80 +133,43 @@ void *clockThread(void *arg)
                 break;
             }
         }
-        lcd20x4_i2c_puts(0, 0, timeString);//Updates the display with the current time.
+        //Updates the display with the current time.
+        lcd20x4_i2c_puts(0, 0, timeString);
         lcd20x4_i2c_puts(2, 0, g_lcd_message); 
+        // Wait for one minute before updating the display again
         clock_gettime(CLOCK_REALTIME, &timeout);
         timeout.tv_sec += ONE_MINUTE;  
         pthread_cond_timedwait(&displayCond, &displayMutex, &timeout);
         pthread_mutex_unlock(&displayMutex);
     }
+    pthread_exit(NULL);
 }
-/**
- * @brief Thread function for handling server socket operations.
- *
- * @param arg A pointer to thread arguments (not used in this implementation).
- * @return void* NULL pointer.
- */
-void *socket_serverThread (void *arg)
-{
-    int server_socket = create_server_socket();
-    if (server_socket == -1) 
-    {
-        syslog_log(LOG_ERR, __func__, "strerror", "Error creating server socket: ", strerror(errno));
-        return NULL; // Handle error in creating socket
-    }
-    while (1)  
-    {
-        struct sockaddr_in client_addr;
-        socklen_t client_addr_len = sizeof(client_addr);
 
-        int client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &client_addr_len);
-
-        if (client_socket < 0) 
-        {
-            syslog_log(LOG_ERR, __func__, "strerror", "Error accepting connection: ", strerror(errno));
-        }
-        else 
-        {
-            // Spawn a new thread to handle the client
-            pthread_t client_thread;
-            if (pthread_create(&client_thread, NULL, handle_clientThread, (void *)client_socket) != THREAD_OK) 
-            {
-                syslog_log(LOG_ERR, __func__, "strerror", " Error creating client thread: ", strerror(errno));
-                close(client_socket);
-            } 
-            else 
-            {
-                // Detach the client thread 
-                pthread_detach(client_thread);
-            }
-        }
-    }
-}
 /**
- * @brief Thread function for handling client operations.
+ * @brief This function runs in a separate thread to periodically send POST requests to the server.
  *
- * @param arg A pointer to the client socket file descriptor.
- * @return void* NULL pointer.
+ * The function sends POST requests to the server at regular intervals and processes the server's response.
+ *
+ * @param arg Unused parameter.
+ * @return Always returns NULL.
  */
-void *handle_clientThread(void *arg) 
+void *post_requestThread(void *arg)
 {
-    int client_socket = (int)arg;
-    int client_id;
-    while (1) 
+    struct timespec timeout;
+    while (!stop)
     {
-        int received_bytes = read_data_from_client(client_socket, &client_id);
-        if (received_bytes == FAILED) 
+        if(send_json_delete_employee()== SUCCESS)
         {
-            syslog_log(LOG_ERR, __func__, "strerror", "  Error reading from client:  ", strerror(errno));
-            break;
-        } 
-        else 
-        {
-            //remove the received fingerprint from the database
-            deleteModel(client_id);
-            DB_delete(client_id);
+            process_response();
         }
+
+        // Set the timeout for the next request
+        clock_gettime(CLOCK_REALTIME, &timeout);
+        timeout.tv_sec += CHECK_INTERVAL;
+
+        pthread_mutex_lock(&requestMutex);
+        pthread_cond_timedwait(&requestCond, &requestMutex, &timeout);
+        pthread_mutex_unlock(&requestMutex);
     }
-    close(client_socket);
+    pthread_exit(NULL);
 }

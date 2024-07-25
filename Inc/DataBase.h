@@ -18,7 +18,7 @@ Status_t DB_write(int ID, int Timestamp, const char *direction,const char *FPM);
 void DB_close();
 int DB_find();
 void DB_update(int id);
-void DB_delete(int ID);
+int DB_delete(int ID);
 void DB_delete_old_records(time_t lastDay);
 int getNextAvailableID();
 int DB_check_id_exists(int id);

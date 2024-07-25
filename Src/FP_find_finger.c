@@ -3,6 +3,16 @@
 char mydata[23] = {0};
 extern uint8_t fingerID[2];
 
+
+// Function to display the route message on the LCD
+/**
+ * @brief Displays a message on the LCD based on the input message.
+ *
+ * This function checks the input message and displays "sign in" or "sign out"
+ * on the LCD based on whether the message is "Hello" or not.
+ *
+ * @param message The input message to be displayed.
+ */
 void display_route(const char *message) 
 {
     if (strcmp(message, "Hello") == 0) 
@@ -15,6 +25,15 @@ void display_route(const char *message)
     }
 }
 // Function to convert a string to an integer
+/**
+ * @brief Converts a string to an integer.
+ *
+ * This function takes a string representing a number and converts it to an integer.
+ * If the string contains invalid characters, it logs an error and returns 0.
+ *
+ * @param str The input string to be converted.
+ * @return int The converted integer, or 0 if the string contains invalid characters.
+ */
 int stringToInt(const char *str)
 {
 	int result = 0;
@@ -36,6 +55,7 @@ int stringToInt(const char *str)
 	}
 	return result;
 }
+// Function to find a fingerprint match
 /**
  * @brief Tries to find a fingerprint match and returns the corresponding ID.
  *

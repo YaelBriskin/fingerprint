@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <signal.h>
+
 #include "./Inc/GPIO.h"
 #include "./Inc/UART.h"
 #include "./Inc/I2C.h"
@@ -19,6 +21,8 @@
 
 volatile bool isRunning = true;
 int uart2_fd, uart4_fd;
+// Flag to stop threads
+volatile sig_atomic_t stop = 0; 
 
 //-------------display
 pthread_mutex_t displayMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -26,8 +30,13 @@ pthread_cond_t displayCond = PTHREAD_COND_INITIALIZER;
 int displayLocked = UNLOCK;
 int timestamp;
 
+/**
+ * @brief Initialize hardware and other resources.
+ * @return Status of the initialization.
+ */
 Status_t init()
 {
+  // Initialize GPIOs
   if (GPIO_init(GPIO_BUTTON_IN, "in") != SUCCESS || GPIO_init(GPIO_BUTTON_OUT, "in") != SUCCESS || GPIO_init(GPIO_BUTTON_NEW, "in") != SUCCESS)
   {
     syslog_log(LOG_ERR, __func__, "strerror", "GPIO BUTTON initialization failed", strerror(errno));
@@ -48,6 +57,7 @@ Status_t init()
     syslog_log(LOG_ERR, __func__, "strerr", "LCD initialization failed!", NULL);
     return FAILED;
   }
+  // Initialize UARTs
   uart2_fd = UART_Init(UART2_DEVICE, UART2_BaudRate);
   uart4_fd = UART_Init(UART4_DEVICE, UART4_BaudRate);
   if (uart2_fd < 1)
@@ -62,8 +72,19 @@ Status_t init()
   }
   return SUCCESS;
 }
+
+/**
+ * @brief Handle fingerprint operations based on button presses.
+ * 
+ * This function continuously checks the state of three GPIO buttons: 
+ * IN, OUT, and NEW. Depending on which button is pressed, it performs 
+ * different actions related to fingerprint recognition and database 
+ * operations. It uses mutexes to ensure thread safety when accessing
+ * shared resources like the display.
+ */
 void fingerPrint()
 {
+  // Open GPIOs for buttons
   int button_fd_in = GPIO_open(GPIO_BUTTON_IN, O_RDONLY);
   int button_fd_out = GPIO_open(GPIO_BUTTON_OUT, O_RDONLY);
   int button_fd_new = GPIO_open(GPIO_BUTTON_NEW, O_RDONLY);
@@ -72,22 +93,25 @@ void fingerPrint()
     syslog_log(LOG_ERR, __func__, "strerror", "Error opening GPIO value file", strerror(errno));
     return;
   }
-  // press button IN
+  // Check if the IN button is pressed
   if (!GPIO_read(button_fd_in))
   {
+    // Lock mutex to access shared resources safely
     if (pthread_mutex_lock(&displayMutex) != MUTEX_OK)
     {
       syslog_log(LOG_ERR, __func__, "strerror", "Error locking mutex", strerror(errno));
       return;
     }
     displayLocked = LOCK;
-    int id = findFinger(HELLO);             // scan fingerprint
+    // Perform fingerprint scan for IN button
+    int id = findFinger(HELLO);             
     timestamp = getCurrent_UTC_Timestamp(); // get current date and time in UTC format
     if (id > 0)
     {
-      buzzer(); // turn on the buzzer
-      sleep(SLEEP_LCD);
-      // write to database
+      buzzer(); // Activate the buzzer for successful scan
+      sleep(SLEEP_LCD); // Wait before updating the display
+
+      // Write entry to the database
       for (int attempts = 0; attempts < g_max_retries; attempts++)
       {
         if (DB_write(id, timestamp, IN, TRUE) == SUCCESS)
@@ -97,11 +121,12 @@ void fingerPrint()
     else if (id == -1)
     {
       lcd20x4_i2c_puts(1, 0, "No matching in the library"); // show on LCD
-      sleep(SLEEP_LCD);
+      sleep(SLEEP_LCD);// Wait before clearing the display
     }
     else
     {
-      id = enter_ID_keypad(); // enter ID using the keypad
+      // Handle case where fingerprint is not found in the database
+      id = enter_ID_keypad(); // Prompt user to enter ID via keypad
       int result = DB_check_id_exists(id);
       if (id > 0 && result)
       {
@@ -110,7 +135,7 @@ void fingerPrint()
           char mydata[23] = {0};
           sprintf(mydata, "Hello  ID #%d", id);
           lcd20x4_i2c_puts(1, 0, mydata); // show on LCD
-          buzzer();                       // turn on the buzzer
+          buzzer();                       // Activate the buzzer for successful entry
         }
         else
         {
@@ -139,7 +164,7 @@ void fingerPrint()
       return;
     }
   }
-  // press button OUT
+  // Check if the OUT button is pressed
   if (!GPIO_read(button_fd_out))
   {
     if (pthread_mutex_lock(&displayMutex) != MUTEX_OK)
@@ -251,28 +276,38 @@ void fingerPrint()
     }
 
     displayLocked = UNLOCK;
-    // Send a signal to finish working with the display
+    // Signal condition variable to indicate that display operation is complete
     if (pthread_cond_signal(&displayCond) != SIGNAL_OK)
     {
       syslog_log(LOG_ERR, __func__, "strerror", "Error signaling condition variable", strerror(errno));
     }
-    lcd20x4_i2c_clear();
+    lcd20x4_i2c_clear();// Clear the display
     if (pthread_mutex_unlock(&displayMutex) != MUTEX_OK)
     {
       syslog_log(LOG_ERR, __func__, "strerror", "Error unlocking mutex", strerror(errno));
       return;
     }
   }
+  // Delay to debounce button presses
   usleep(DELAY);
+  // Close GPIOs after operations
   GPIO_close(GPIO_BUTTON_IN);
   GPIO_close(GPIO_BUTTON_OUT);
   GPIO_close(GPIO_BUTTON_NEW);
 }
+
+/**
+ * @brief Main entry point of the program.
+ * @return Exit status.
+ */
 int main()
 {
   Config_t config;
-  pthread_t thread_datetime, thread_FPM, thread_database, thread_socket;
+  pthread_t thread_datetime, thread_database,thread_deletion;
   syslog_init();
+
+  setup_sigint_handler();
+
   // Initialize I2C Display
   if (init() == SUCCESS && read_config(&config) == SUCCESS)
   {
@@ -282,27 +317,33 @@ int main()
       syslog_log(LOG_ERR, __func__, "strerror", "Could not initialize cURL", strerror(errno));
       return EXIT_FAILURE;
     }
-    //
-    // emptyDatabase();
-    // Initialize global variables
+    // emptyDatabase(); //do this to empty database in FPM
+
+    // Initialize global variables from config file
     g_server_port = config.server_port;
     g_month = config.month;
     strncpy(g_url, config.url, MAX_URL_LENGTH);
     strncpy(g_url_new_employee, config.url_new_employee, MAX_URL_LENGTH);
+    strncpy(g_url_delete_employee,config.url_delete_employee,MAX_URL_LENGTH);
+    strncpy(g_url_check_delete,config.url_check_delete,MAX_URL_LENGTH);
     strncpy(g_header, config.header, MAX_HEADER_LENGTH);
     g_max_retries = config.max_retries;
     g_db_sleep = config.db_sleep;
     strncpy(g_file_name, config.file_name, MAX_FILENAME_LENGTH);
     strncpy(g_lcd_message, config.lcd_message, MAX_LCD_MESSAGE_LENGTH);
+    
     // create or open database
     DB_open();
 
+    // Turn off LED
     int fd_led = GPIO_open(GPIO_LED_RED, O_WRONLY);
     GPIO_write(fd_led, LED_OFF);
     GPIO_close(fd_led);
 
     // Initialize the file using the name from the configuration
-    initFile(g_file_name);
+    initFile(&file_global, g_file_name);
+    initFile(&file_URL, "URL.txt");
+
     // Create a threads
     if (pthread_create(&thread_datetime, NULL, clockThread, NULL) != THREAD_OK)
     {
@@ -312,24 +353,24 @@ int main()
     }
     if (pthread_create(&thread_database, NULL, databaseThread, NULL) != THREAD_OK)
     {
-      syslog_log(LOG_ERR, __func__, "strerror", "Error creating displayThread thread", strerror(errno));
+      syslog_log(LOG_ERR, __func__, "strerror", "Error creating databaseThread thread", strerror(errno));
       curl_global_cleanup();
       return THREAD_ERROR;
     }
-    if (pthread_create(&thread_socket, NULL, socket_serverThread, NULL) != THREAD_OK)
+    if (pthread_create(&thread_deletion, NULL, post_requestThread, NULL) != THREAD_OK)
     {
-      syslog_log(LOG_ERR, __func__, "strerror", "Error creating socketThread thread", strerror(errno));
+      syslog_log(LOG_ERR, __func__, "strerror", "Error creating post_requestThread thread", strerror(errno));
       curl_global_cleanup();
       return THREAD_ERROR;
     }
-    while (1)
+    while (!stop)
     {
       fingerPrint();
     }
     // Wait for the thread to complete
     pthread_join(thread_datetime, NULL);
     pthread_join(thread_database, NULL);
-    pthread_join(thread_socket, NULL);
+    pthread_join(thread_deletion, NULL);
 
     // Cleanup cURL library globally
     curl_global_cleanup();
@@ -338,6 +379,5 @@ int main()
   }
   else
     syslog_close();
-  closeFile();
   return EXIT_FAILURE;
 }

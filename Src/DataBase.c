@@ -5,6 +5,10 @@ pthread_mutex_t sqlMutex;
 
 /**
  * @brief Retrieves the next available ID from the database.
+ * 
+ * This function queries the 'sqlite_sequence' table to get the current sequence number
+ * for the 'employees' table and returns the next available ID.
+ *
  * @return The next available ID.
  */
 int getNextAvailableID()
@@ -46,7 +50,7 @@ void DB_open()
         exit(EXIT_FAILURE);
     }
 
-    // Open a connection to the database (if there is no database, it will be created automatically)
+    // Create the 'attendance' table if it does not exist
     const char *create_attendance_table_query = "CREATE TABLE IF NOT EXISTS attendance ("
                                                 "ID INTEGER,"
                                                 "Timestamp INTEGER NOT NULL,"
@@ -63,6 +67,7 @@ void DB_open()
         sqlite3_free(err_msg);
         exit(EXIT_FAILURE);
     }
+    // Create the 'employees' table if it does not exist
     const char *create_employees_table_query = "CREATE TABLE IF NOT EXISTS employees ("
                                                "ID INTEGER PRIMARY KEY AUTOINCREMENT);";
 
@@ -245,8 +250,9 @@ void DB_update(int id)
  * This function deletes a record from the 'employees' table based on the specified ID.
  *
  * @param ID The ID of the employee to delete.
+ * @return SUCCESS on success, FAILED on failure.
  */
-void DB_delete(int ID)
+int DB_delete(int ID)
 {
     if (pthread_mutex_lock(&sqlMutex) == MUTEX_OK)
     {
@@ -256,7 +262,7 @@ void DB_delete(int ID)
         if (!sql_query || ret == -1)
         {
             syslog_log(LOG_ERR, __func__, "format", "Memory allocation error");
-            return;
+            return FAILED;
         }
 
         sqlite3_stmt *stmt;
@@ -266,7 +272,7 @@ void DB_delete(int ID)
             syslog_log(LOG_ERR, __func__, "format", "Failed to prepare request: %s", sqlite3_errmsg(db_attendance));
             sqlite3_free(sql_query); // Free allocated memory
             pthread_mutex_unlock(&sqlMutex);
-            return; // Return error code
+            return FAILED; // Return error code
         }
 
         // Execute the prepared statement
@@ -276,12 +282,15 @@ void DB_delete(int ID)
             sqlite3_finalize(stmt);
             sqlite3_free(sql_query);
             pthread_mutex_unlock(&sqlMutex);
-            return;
+            return FAILED;
         }
-        writeToFile(__func__, "ID deleted from DB");
+        char log_message[MAX_LOG_MESSAGE_LENGTH];
+        snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "ID %d deleted from DB", ID);
+        writeToFile(file_global, __func__, log_message);
         sqlite3_finalize(stmt);
         sqlite3_free(sql_query);
         pthread_mutex_unlock(&sqlMutex);
+        return SUCCESS;
     }
 }
 /**
@@ -332,6 +341,15 @@ void DB_delete_old_records(time_t lastDay)
         pthread_mutex_unlock(&sqlMutex);
     }
 }
+
+/**
+ * @brief Checks if an employee ID exists in the database.
+ *
+ * This function checks if a given ID exists in the 'employees' table.
+ *
+ * @param id The ID to check.
+ * @return SUCCESS if the ID exists, FAILED if it does not, or ERROR on query failure.
+ */
 int DB_check_id_exists(int id)
 {
     if (pthread_mutex_lock(&sqlMutex) == MUTEX_OK)
