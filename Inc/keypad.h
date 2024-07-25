@@ -14,10 +14,6 @@
 #include <time.h>
 #include "config.h"
 
-
-#define MAX_LENGTH_ID 3
-#define MAX_FINGERPRINT 100
-
 int enter_ID_keypad();
 char convert_to_char(uint8_t value);
 

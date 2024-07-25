@@ -41,6 +41,8 @@
 #define MAX_FILENAME_LENGTH 256
 #define MAX_LCD_MESSAGE_LENGTH 20
 
+#define MAX_LENGTH_ID 3
+#define MAX_FINGERPRINT 100
 
 #define CONFIG_NAME "config.conf"
 
