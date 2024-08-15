@@ -33,7 +33,6 @@ void handle_sigint(int sig)
     stop = 1;
 
     // Clean up resources
-    syslog_close();
     curl_global_cleanup();
     DB_close();
     UART_close(uart2_fd);
@@ -41,12 +40,32 @@ void handle_sigint(int sig)
     I2C_close();
     closeFile(file_global);
     closeFile(file_URL);
-    //Destroying the condition variable and mutex
-    pthread_cond_destroy(&databaseCond);
-    pthread_cond_destroy(&displayCond);
-    pthread_mutex_destroy(&sqlMutex);
-    pthread_mutex_destroy(&databaseMutex);
-    pthread_mutex_destroy(&displayMutex);
+
+        // Destroy condition variables and mutexes with error checking
+    if (pthread_cond_destroy(&databaseCond) != 0) 
+    {
+        syslog_log(LOG_ERR, __func__, "strerror", "Error destroying databaseCond", strerror(errno));
+    }
+    if (pthread_cond_destroy(&displayCond) != 0) 
+    {
+        syslog_log(LOG_ERR, __func__, "strerror", "Error destroying displayCond", strerror(errno));
+    }
+    if (pthread_mutex_destroy(&sqlMutex) != 0) 
+    {
+        syslog_log(LOG_ERR, __func__, "strerror", "Error destroying sqlMutex", strerror(errno));
+    }
+    if (pthread_mutex_destroy(&databaseMutex) != 0) 
+    {
+        syslog_log(LOG_ERR, __func__, "strerror", "Error destroying databaseMutex", strerror(errno));
+    }
+    if (pthread_mutex_destroy(&displayMutex) != 0) 
+    {
+        syslog_log(LOG_ERR, __func__, "strerror", "Error destroying displayMutex", strerror(errno));
+    }
+
+    // Close syslog last
+    syslog_close();
+    
     // Exit the program
     exit(0);
 }
@@ -64,7 +83,7 @@ void setup_sigint_handler()
     // Define a sigaction structure to specify the signal handler
     struct sigaction sa;
     sa.sa_handler = handle_sigint;
-    sa.sa_flags = 0;
+    sa.sa_flags = SA_RESTART;
     sigemptyset(&sa.sa_mask);
 
     // Set up the SIGINT signal handler

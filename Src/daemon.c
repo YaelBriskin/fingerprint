@@ -50,7 +50,6 @@ void init_daemon()
     if (pid > 0)
         exit(EXIT_SUCCESS);
 
-
     // Set file permissions mask to 0
     umask(0);
 
@@ -58,11 +57,9 @@ void init_daemon()
     if (chdir("/") < 0)
         exit(EXIT_FAILURE);
 
-
     // Close all open file descriptors
     for (int x = sysconf(_SC_OPEN_MAX); x >= 0; x--)
     {
         close(x);
     }
-
 }

@@ -35,10 +35,21 @@ int getCurrent_UTC_Timestamp()
 void buzzer()
 {
     int fd_buzzer = GPIO_open(GPIO_BUZZER, O_WRONLY);
-    GPIO_write(fd_buzzer,BUZZER_ON);
+    if (fd_buzzer < 0) 
+    {
+        syslog_log(LOG_ERR, __func__, "stderr", "Failed to open GPIO_BUZZER");
+        return;
+    }
+    if (GPIO_write(fd_buzzer, BUZZER_ON) < 0) 
+    {
+        syslog_log(LOG_ERR, __func__, "stderr", "Failed to turn on buzzer");
+    }
     usleep(SLEEP_BUZZER);
-    GPIO_write(fd_buzzer,BUZZER_OFF);
-    GPIO_close(GPIO_BUZZER);
+    if (GPIO_write(fd_buzzer, BUZZER_OFF) < 0) 
+    {
+        syslog_log(LOG_ERR, __func__, "stderr", "Failed to turn off buzzer");
+    }
+    GPIO_close(fd_buzzer);
 }
 
 /**
@@ -58,6 +69,11 @@ void *databaseThread(void *arg)
     while (!stop)
     {
         int fd_led = GPIO_open(GPIO_LED_RED,O_WRONLY);
+        if (fd_led < 0) 
+        {
+            syslog_log(LOG_ERR, __func__, "stderr", "Failed to open GPIO_LED_RED");
+            pthread_exit(NULL);
+        }
         //checks whether there is data in the database that has not yet been sent and 
         //if there is any, it sends it to the server
         if (DB_find()!= 1)
@@ -66,7 +82,10 @@ void *databaseThread(void *arg)
             if (++count == g_max_retries)
             {
                 //led on
-                GPIO_write(fd_led,LED_ON);
+                if (GPIO_write(fd_led, LED_ON) < 0) 
+                {
+                    syslog_log(LOG_ERR, __func__, "stderr", "Failed to turn on LED");
+                }
             }
 
         }
@@ -74,7 +93,10 @@ void *databaseThread(void *arg)
         {
             count = 0;
             // Turn off the LED if data is sent successfully
-            GPIO_write(fd_led,LED_OFF);
+            if (GPIO_write(fd_led, LED_OFF) < 0) 
+            {
+                syslog_log(LOG_ERR, __func__, "stderr", "Failed to turn off LED");
+            }
         }
         GPIO_close(GPIO_LED_RED);
         clock_gettime(CLOCK_REALTIME, &timeout);
