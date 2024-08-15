@@ -13,7 +13,9 @@
 #include "FP_delete.h"
 
 size_t WriteCallback(void *ptr, size_t size, size_t nmemb, FILE *stream);
-int send_request(const char *post_data, const char *URL);
+int send_post_request(const char *post_data, const char *URL);
+int send_get_request(const char *URL);
+int send_delete_request(const char *URL, const char *data);
 Status_t send_json_data (int tz, const char* event, int timestamp, const char* fpm);
 Status_t send_json_new_employee (int id, int timestamp);
 Status_t send_json_delete_employee ();

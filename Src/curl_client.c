@@ -19,7 +19,7 @@ size_t WriteCallback(void *ptr, size_t size, size_t nmemb, FILE *stream)
  * @param URL The URL to which the request will be sent.
  * @return 1 if the request was successful, 0 otherwise.
  */
-int send_request(const char *post_data, const char *URL)
+int send_post_request(const char *post_data, const char *URL)
 {
     CURL *curl;
     CURLcode res;
@@ -29,7 +29,7 @@ int send_request(const char *post_data, const char *URL)
     if (pthread_mutex_lock(&requestMutex) != MUTEX_OK)
     {
         // Handle mutex acquisition error
-        writeToFile(file_URL, __func__, "Failed to unlock mutex");
+        writeToFile(file_URL, __func__, "Failed to lock mutex");
         return FAILED;
     }
     curl = curl_easy_init();
@@ -44,6 +44,7 @@ int send_request(const char *post_data, const char *URL)
             curl_easy_cleanup(curl);
             curl_global_cleanup();
             writeToFile(file_URL, __func__, "stderr", "Failed to set HTTP headers");
+            pthread_mutex_unlock(&requestMutex);
             return FAILED;
         }
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
@@ -66,16 +67,16 @@ int send_request(const char *post_data, const char *URL)
         // Check the success of the request
         if (res != CURLE_OK)
         {
-        char log_message[MAX_LOG_MESSAGE_LENGTH];
-        snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "curl_easy_perform() failed . ERROR: ", curl_easy_strerror(res));
-        writeToFile(file_URL, __func__, log_message);
+            char log_message[MAX_LOG_MESSAGE_LENGTH];
+            snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "curl_easy_perform() failed . ERROR: %s ", curl_easy_strerror(res));
+            writeToFile(file_URL, __func__, log_message);
             result = FAILED;
         }
         else if (response_code >= 400)
         {
             char log_message[MAX_LOG_MESSAGE_LENGTH];
-        snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "HTTP request failed with response code: %ld", response_code);
-        writeToFile(file_URL, __func__, log_message);
+            snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "HTTP request failed with response code: %ld", response_code);
+            writeToFile(file_URL, __func__, log_message);
             result = FAILED;
         }
         // Release resources
@@ -84,6 +85,141 @@ int send_request(const char *post_data, const char *URL)
     }
     else
         result = FAILED;
+
+    pthread_mutex_unlock(&requestMutex);
+    return result;
+}
+/**
+ * @brief Sends an HTTP GET request to the given URL.
+ *
+ * This function initializes the cURL library, sets up the HTTP GET request, and sends it to the predefined URL.
+ * It checks the response code and logs any errors.
+ *
+ * @param URL The URL to which the request will be sent.
+ * @return 1 if the request was successful, 0 otherwise.
+ */
+int send_get_request(const char *URL)
+{
+    CURL *curl;
+    CURLcode res;
+    int result = SUCCESS;
+    long response_code;
+
+    if (pthread_mutex_lock(&requestMutex) != MUTEX_OK)
+    {
+        // Handle mutex acquisition error
+        writeToFile(file_URL, __func__, "Failed to lock mutex");
+        return FAILED;
+    }
+    curl = curl_easy_init();
+    if (curl)
+    {
+        // Set the URL to which the request will be sent
+        curl_easy_setopt(curl, CURLOPT_URL, URL);
+        // Setting the request method (GET)
+        curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+
+        // Add a callback function to record response data
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        // Specify the file where the response data will be written
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, file_URL);
+
+        // Execute the request
+        res = curl_easy_perform(curl);
+        // Check the server response status code
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+        // Check the success of the request
+        if (res != CURLE_OK)
+        {
+            char log_message[MAX_LOG_MESSAGE_LENGTH];
+            snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "curl_easy_perform() failed. ERROR: %s", curl_easy_strerror(res));
+            writeToFile(file_URL, __func__, log_message);
+            result = FAILED;
+        }
+        else if (response_code >= 400)
+        {
+            char log_message[MAX_LOG_MESSAGE_LENGTH];
+            snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "HTTP request failed with response code: %ld", response_code);
+            writeToFile(file_URL, __func__, log_message);
+            result = FAILED;
+        }
+        // Release resources
+        curl_easy_cleanup(curl);
+    }
+    else
+    {
+        result = FAILED;
+    }
+
+    pthread_mutex_unlock(&requestMutex);
+    return result;
+}
+
+/**
+ * @brief Sends an HTTP DELETE request to the given URL with the specified data.
+ *
+ * This function initializes the cURL library, sets up the HTTP DELETE request with the provided
+ * data, and sends it to the predefined URL. It checks the response code and logs any errors.
+ *
+ * @param URL The URL to which the request will be sent.
+ * @param data The JSON data to send in the DELETE request.
+ * @return 1 if the request was successful, 0 otherwise.
+ */
+int send_delete_request(const char *URL, const char *data) 
+{
+    CURL *curl;
+    CURLcode res;
+    int result = SUCCESS;
+    long response_code;
+
+    if (pthread_mutex_lock(&requestMutex) != MUTEX_OK)
+    {
+        // Handle mutex acquisition error
+        writeToFile(file_URL, __func__, "Failed to lock mutex");
+        return FAILED;
+    }
+    curl = curl_easy_init();
+    if (curl) 
+    {
+        // Set the URL to which the request will be sent
+        curl_easy_setopt(curl, CURLOPT_URL, URL);
+        // Setting the request method (DELETE)
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+
+        // Add a callback function to record response data
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        // Specify the file where the response data will be written
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, file_URL);
+
+        // Set the data to be sent
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
+
+        // Execute the request
+        res = curl_easy_perform(curl);
+        // Check the server response status code
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+        // Check the success of the request
+        if (res != CURLE_OK) 
+        {
+            char log_message[MAX_LOG_MESSAGE_LENGTH];
+            snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "curl_easy_perform() failed. ERROR: %s", curl_easy_strerror(res));
+            writeToFile(file_URL, __func__, log_message);
+            result = FAILED;
+        } 
+        else if (response_code >= 400) 
+        {
+            char log_message[MAX_LOG_MESSAGE_LENGTH];
+            snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "HTTP request failed with response code: %ld", response_code);
+            writeToFile(file_URL, __func__, log_message);
+            result = FAILED;
+        }
+        // Release resources
+        curl_easy_cleanup(curl);
+    } 
+    else 
+    {
+        result = FAILED;
+    }
 
     pthread_mutex_unlock(&requestMutex);
     return result;
@@ -113,7 +249,7 @@ Status_t send_json_data(int id, const char *event, int timestamp, const char *fp
         cJSON_Delete(root);
         return FAILED;
     }
-    int result = send_request(json_data, g_url);
+    int result = send_post_request(json_data, g_url);
     cJSON_Delete(root);
     free(json_data);
 
@@ -146,7 +282,7 @@ Status_t send_json_new_employee(int id, int timestamp)
         cJSON_Delete(root);
         return FAILED;
     }
-    int result = send_request(json_data, g_url_new_employee);
+    int result = send_post_request(json_data, g_url_new_employee);
     cJSON_Delete(root);
     free(json_data);
     if (result != SUCCESS)
@@ -166,7 +302,7 @@ Status_t send_json_new_employee(int id, int timestamp)
  */
 Status_t send_json_delete_employee()
 {
-    int result = send_request(NULL, g_url_delete_employee);
+    int result = send_get_request(g_url_delete_employee);
     if (result != SUCCESS)
     {
         char log_message[MAX_LOG_MESSAGE_LENGTH];
@@ -193,7 +329,12 @@ Status_t send_json_ack_delete(int id)
         cJSON_Delete(root);
         return FAILED;
     }
-    int result = send_request(json_data, g_url_check_delete);
+
+    // Append ":id" to the g_url_check_delete
+    char url_with_id[MAX_URL_LENGTH];
+    snprintf(url_with_id, sizeof(url_with_id), "%s/%d", g_url_check_delete, id);
+
+    int result = send_delete_request(url_with_id, json_data);
     if (result != SUCCESS)
     {
         char log_message[MAX_LOG_MESSAGE_LENGTH];

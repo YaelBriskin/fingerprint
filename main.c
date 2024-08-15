@@ -304,9 +304,12 @@ int main()
 {
   Config_t config;
   pthread_t thread_datetime, thread_database,thread_deletion;
+  
   syslog_init();
-
   setup_sigint_handler();
+  // daemon
+  setup_signal_handler();
+  init_daemon();
 
   // Initialize I2C Display
   if (init() == SUCCESS && read_config(&config) == SUCCESS)
