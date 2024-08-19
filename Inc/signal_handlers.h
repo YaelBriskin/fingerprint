@@ -7,6 +7,7 @@
 #include <string.h>
 #include <errno.h>
 #include <syslog.h>
+
 #include "DataBase.h"
 #include "curl_client.h"
 #include "I2C.h"

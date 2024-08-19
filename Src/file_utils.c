@@ -12,7 +12,7 @@ FILE *file_URL = NULL;
  * @param file_name File name for logging.
  * @param file_ptr Pointer to the FILE into which the file will be written.
  */
-void *initFile(FILE **file, const char *file_name) 
+void initFile(FILE **file, const char *file_name) 
 {
     *file = fopen(file_name, "a"); // "a" means "append" - add to the end of the file
     if (file == NULL) 

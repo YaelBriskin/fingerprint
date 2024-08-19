@@ -7,9 +7,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include "defines.h"
 #include "curl_client.h"
 #include "syslog_util.h"
-#include "defines.h"
 #include "config.h"
 
 void DB_open();

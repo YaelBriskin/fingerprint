@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include "defines.h"
 #include "GPIO.h"
 #include "packet.h"
 #include "UART.h"
@@ -17,7 +18,6 @@
 #include "lcd20x4_i2c.h"
 #include "keypad.h"
 #include "curl_client.h"
-#include "defines.h"
 #include "config.h"
 
 //---functions

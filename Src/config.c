@@ -10,7 +10,6 @@ char g_url_check_delete[MAX_URL_LENGTH];
 char g_header[MAX_HEADER_LENGTH];
 int g_max_retries;
 int g_db_sleep;
-char g_file_name[MAX_FILENAME_LENGTH];
 char g_lcd_message[MAX_LCD_MESSAGE_LENGTH];
 
 
@@ -22,7 +21,6 @@ Status_t read_config(Config_t *config)
         syslog_log(LOG_ERR, __func__, "strerror", "Could not open config file", strerror(errno));
         return FAILED;
     }
-
     // Read and process configuration data
     if (fscanf(file, "SERVER_PORT %d\n", &config->server_port) != SUCCESS)
     {
@@ -78,13 +76,8 @@ Status_t read_config(Config_t *config)
         fclose(file);
         return FAILED;
     }
-    if (fscanf(file, "FILE_NAME %s\n", config->file_name) != SUCCESS)
+    if (fscanf(file, "LCD_MESSAGE \"%[^\"]\"\n", config->lcd_message) != SUCCESS) 
     {
-        syslog_log(LOG_ERR, __func__, "stderr", "Error reading FILE_NAME from config file");
-        fclose(file);
-        return FAILED;
-    }
-    if (fscanf(file, "LCD_MESSAGE \"%[^\"]\"\n", config->lcd_message) != SUCCESS) {
         syslog_log(LOG_ERR, __func__, "stderr", "Error reading LCD_MESSAGE from config file");
         fclose(file);
         return FAILED;

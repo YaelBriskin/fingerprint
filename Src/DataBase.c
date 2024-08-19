@@ -286,7 +286,7 @@ int DB_delete(int ID)
         }
         char log_message[MAX_LOG_MESSAGE_LENGTH];
         snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "ID %d deleted from DB", ID);
-        writeToFile(file_global, __func__, log_message);
+        syslog_log(LOG_ERR, __func__, "stderr",log_message);
         sqlite3_finalize(stmt);
         sqlite3_free(sql_query);
         pthread_mutex_unlock(&sqlMutex);

@@ -61,6 +61,8 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "typeinfo": "cpp",
-        "inet.h": "c"
+        "inet.h": "c",
+        "i2c.h": "c",
+        "uart.h": "c"
     }
 }

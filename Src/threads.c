@@ -40,15 +40,10 @@ void buzzer()
         syslog_log(LOG_ERR, __func__, "stderr", "Failed to open GPIO_BUZZER");
         return;
     }
-    if (GPIO_write(fd_buzzer, BUZZER_ON) < 0) 
-    {
-        syslog_log(LOG_ERR, __func__, "stderr", "Failed to turn on buzzer");
-    }
+    GPIO_write(fd_buzzer, BUZZER_ON);
+
     usleep(SLEEP_BUZZER);
-    if (GPIO_write(fd_buzzer, BUZZER_OFF) < 0) 
-    {
-        syslog_log(LOG_ERR, __func__, "stderr", "Failed to turn off buzzer");
-    }
+    GPIO_write(fd_buzzer, BUZZER_OFF);
     GPIO_close(fd_buzzer);
 }
 
@@ -82,10 +77,7 @@ void *databaseThread(void *arg)
             if (++count == g_max_retries)
             {
                 //led on
-                if (GPIO_write(fd_led, LED_ON) < 0) 
-                {
-                    syslog_log(LOG_ERR, __func__, "stderr", "Failed to turn on LED");
-                }
+                GPIO_write(fd_led, LED_ON);
             }
 
         }
@@ -93,10 +85,7 @@ void *databaseThread(void *arg)
         {
             count = 0;
             // Turn off the LED if data is sent successfully
-            if (GPIO_write(fd_led, LED_OFF) < 0) 
-            {
-                syslog_log(LOG_ERR, __func__, "stderr", "Failed to turn off LED");
-            }
+            GPIO_write(fd_led, LED_OFF);
         }
         GPIO_close(GPIO_LED_RED);
         clock_gettime(CLOCK_REALTIME, &timeout);
@@ -180,11 +169,14 @@ void *post_requestThread(void *arg)
     struct timespec timeout;
     while (!stop)
     {
-        if(send_json_delete_employee()== SUCCESS)
+        int result = send_get_request(g_url_delete_employee);
+        if (result != SUCCESS)
         {
-            process_response();
+            char log_message[MAX_LOG_MESSAGE_LENGTH];
+            snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to send request for deletions. Error: %s", strerror(errno));
+            writeToFile(file_URL, __func__, log_message);
+            continue;
         }
-
         // Set the timeout for the next request
         clock_gettime(CLOCK_REALTIME, &timeout);
         timeout.tv_sec += CHECK_INTERVAL;

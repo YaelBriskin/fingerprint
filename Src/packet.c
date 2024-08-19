@@ -393,20 +393,20 @@ uint8_t GetFromUart(fingerprintPacket *packet)
 /**************************************************************************/
 void printParameters()
 {
-	writeToFile(file_global,__func__,"Device parameters:");
+	syslog_log(LOG_ERR, __func__, "stderr","Device parameters:");
     char log_message[MAX_LOG_MESSAGE_LENGTH];
     snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Status register: 0x%04X", parameters.status_reg);
-    writeToFile(file_global, __func__,log_message);
+	syslog_log(LOG_ERR, __func__, "stderr",log_message);
     snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "System ID code: 0x%04X", parameters.system_id);
-    writeToFile(file_global, __func__,log_message);
+    syslog_log(LOG_ERR, __func__, "stderr",log_message);
     snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Finger library size: %d", parameters.capacity);
-    writeToFile(file_global, __func__,log_message);
+    syslog_log(LOG_ERR, __func__, "stderr",log_message);
     snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Security level: %d", parameters.security_level);
-    writeToFile(file_global, __func__,log_message);
+    syslog_log(LOG_ERR, __func__, "stderr",log_message);
     snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Device address: 0x%08X", parameters.device_addr);
-    writeToFile(file_global, __func__,log_message);
+    syslog_log(LOG_ERR, __func__, "stderr",log_message);
     snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Data packet size: %d", parameters.packet_len);
-    writeToFile(file_global, __func__,log_message);
+    syslog_log(LOG_ERR, __func__, "stderr",log_message);
     snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Baud rate: %d", parameters.baud_rate);
-    writeToFile(file_global, __func__,log_message);
+    syslog_log(LOG_ERR, __func__, "stderr",log_message);
 }

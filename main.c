@@ -5,7 +5,10 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <signal.h>
+#include <stdbool.h>
+#include <time.h>
 
+#include "./Inc/defines.h"
 #include "./Inc/GPIO.h"
 #include "./Inc/UART.h"
 #include "./Inc/I2C.h"
@@ -14,15 +17,15 @@
 #include "./Inc/threads.h"
 #include "./Inc/config.h"
 #include "./Inc/syslog_util.h"
-#include "./Inc/defines.h"
-
-#include <stdbool.h>
-#include <time.h>
+#include "./Inc/daemon.h"
+#include "./Inc/signal_handlers.h"
 
 volatile bool isRunning = true;
 int uart2_fd, uart4_fd;
 // Flag to stop threads
 volatile sig_atomic_t stop = 0; 
+
+pthread_t thread_datetime, thread_database,thread_deletion;
 
 //-------------display
 pthread_mutex_t displayMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -303,17 +306,25 @@ void fingerPrint()
 int main()
 {
   Config_t config;
-  pthread_t thread_datetime, thread_database,thread_deletion;
-  
+ 
   syslog_init();
   setup_sigint_handler();
   // daemon
-  setup_signal_handler();
-  init_daemon();
+  //setup_signal_handler();
+  //init_daemon();
 
-  // Initialize I2C Display
-  if (init() == SUCCESS && read_config(&config) == SUCCESS)
-  {
+// Initialize I2C Display
+if(init() == FAILED )
+{ 
+  syslog_close();
+  return 1;
+}
+//Read all data from config file
+if(read_config(&config) == FAILED)
+{
+  syslog_close();
+  return 1;
+}
     // Initialize the cURL library globally
     if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK)
     {
@@ -332,7 +343,6 @@ int main()
     strncpy(g_header, config.header, MAX_HEADER_LENGTH);
     g_max_retries = config.max_retries;
     g_db_sleep = config.db_sleep;
-    strncpy(g_file_name, config.file_name, MAX_FILENAME_LENGTH);
     strncpy(g_lcd_message, config.lcd_message, MAX_LCD_MESSAGE_LENGTH);
     
     // create or open database
@@ -344,7 +354,6 @@ int main()
     GPIO_close(fd_led);
 
     // Initialize the file using the name from the configuration
-    initFile(&file_global, g_file_name);
     initFile(&file_URL, "URL.txt");
 
     // Create a threads
@@ -379,8 +388,5 @@ int main()
     curl_global_cleanup();
 
     return EXIT_SUCCESS;
-  }
-  else
-    syslog_close();
   return EXIT_FAILURE;
 }

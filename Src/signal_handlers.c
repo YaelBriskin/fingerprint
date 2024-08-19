@@ -1,5 +1,8 @@
 #include "../Inc/signal_handlers.h"
 
+extern pthread_t thread_datetime;
+extern pthread_t thread_database;
+extern pthread_t thread_deletion;
 // External declarations of condition variables
 extern pthread_cond_t displayCond;
 extern pthread_cond_t databaseCond;
@@ -38,7 +41,6 @@ void handle_sigint(int sig)
     UART_close(uart2_fd);
     UART_close(uart4_fd);
     I2C_close();
-    closeFile(file_global);
     closeFile(file_URL);
 
         // Destroy condition variables and mutexes with error checking
@@ -66,6 +68,11 @@ void handle_sigint(int sig)
     // Close syslog last
     syslog_close();
     
+    // Wait for the thread to complete
+    pthread_join(thread_datetime, NULL);
+    pthread_join(thread_database, NULL);
+    pthread_join(thread_deletion, NULL);
+
     // Exit the program
     exit(0);
 }
@@ -83,7 +90,7 @@ void setup_sigint_handler()
     // Define a sigaction structure to specify the signal handler
     struct sigaction sa;
     sa.sa_handler = handle_sigint;
-    sa.sa_flags = SA_RESTART;
+    sa.sa_flags = 0;
     sigemptyset(&sa.sa_mask);
 
     // Set up the SIGINT signal handler

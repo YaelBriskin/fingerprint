@@ -1,17 +1,47 @@
 #include "../Inc/daemon.h"
 
+void signal_handler(int signo)
+{
+    switch (signo)
+    {
+        case SIGTERM:
+            syslog_log(LOG_ERR, __func__, "stderr", "Received SIGTERM signal. Terminating...");
+            exit(EXIT_SUCCESS); 
+            break;
+        case SIGCHLD:
+            syslog_log(LOG_ERR, __func__, "stderr", "Received SIGCHLD signal.");
+            break;
 
+        default:
+            syslog_log(LOG_ERR, __func__, "stderr", "Received unknown signal.");
+            break;
+    }
+}
 /**
  * @brief Sets up the signal handler for SIGTERM.
  */
 void setup_signal_handler()
 {
     struct sigaction sa;
-    sa.sa_handler = SIG_IGN;
-    sigaction(SIGCHLD, &sa, NULL); // Ignore SIGCHLD
+    sa.sa_handler = signal_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
 
-    sa.sa_handler = SIGTERM;
-    sigaction(SIGTERM, &sa, NULL); // Handle SIGTERM
+    if (sigaction(SIGTERM, &sa, NULL) == -1) 
+    {
+        char log_message[MAX_LOG_MESSAGE_LENGTH];
+        snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to set up SIGTERM handler. Error: %s", strerror(errno));
+        syslog_log(LOG_ERR, __func__, "stderr",log_message);
+        exit(EXIT_FAILURE);
+    }
+
+    if (sigaction(SIGCHLD, &sa, NULL) == -1) 
+    {
+        char log_message[MAX_LOG_MESSAGE_LENGTH];
+        snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to set up SIGCHLD handler. Error: %s", strerror(errno));
+        syslog_log(LOG_ERR, __func__, "stderr",log_message);
+        exit(EXIT_FAILURE);
+    }
 }
 
 /**

@@ -9,6 +9,7 @@
 #include "../Inc/FP_enrolling.h"
 #include "defines.h"
 #include "config.h"
+#include "file_utils.h"
 
 // confirmation codes
 #define FINGERPRINT_OK 0x00                 // выполнение команды завершено успешно

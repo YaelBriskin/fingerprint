@@ -1,8 +1,6 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-#include "file_utils.h"
-
 #define CANCEL 0
 #define ERROR -1
 #define MUTEX_OK 0
