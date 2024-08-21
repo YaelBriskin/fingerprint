@@ -23,9 +23,9 @@
 volatile bool isRunning = true;
 int uart2_fd, uart4_fd;
 // Flag to stop threads
-volatile sig_atomic_t stop = 0; 
+volatile sig_atomic_t stop = 0;
 
-pthread_t thread_datetime, thread_database,thread_deletion;
+pthread_t thread_datetime, thread_database, thread_deletion;
 
 //-------------display
 pthread_mutex_t displayMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -33,55 +33,152 @@ pthread_cond_t displayCond = PTHREAD_COND_INITIALIZER;
 int displayLocked = UNLOCK;
 int timestamp;
 
+// Global flags for tracking initialization
+bool gpio_button_in_initialized = false;
+bool gpio_button_out_initialized = false;
+bool gpio_button_new_initialized = false;
+bool gpio_buzzer_initialized = false;
+bool gpio_led_red_initialized = false;
+bool lcd_initialized = false;
+bool uart2_initialized = false;
+bool uart4_initialized = false;
+
+/**
+ * @brief Cleans up resources that have been initialized.
+ *
+ * This function checks which resources have been successfully initialized
+ * and releases them accordingly. It helps to ensure that resources are
+ * properly cleaned up in case of initialization failures.
+ */
+void cleanup_resources()
+{
+  // Clean up GPIOs
+  if (gpio_button_in_initialized)
+  {
+    GPIO_close(GPIO_BUTTON_IN);
+  }
+  if (gpio_button_out_initialized)
+  {
+    GPIO_close(GPIO_BUTTON_OUT);
+  }
+  if (gpio_button_new_initialized)
+  {
+    GPIO_close(GPIO_BUTTON_NEW);
+  }
+  if (gpio_buzzer_initialized)
+  {
+    GPIO_close(GPIO_BUZZER);
+  }
+  if (gpio_led_red_initialized)
+  {
+    GPIO_close(GPIO_LED_RED);
+  }
+  // Clean up LCD
+  if (lcd_initialized)
+  {
+    lcd20x4_i2c_close();
+  }
+  // Clean up UARTs
+  if (uart2_initialized)
+  {
+    close(uart2_fd);
+  }
+  if (uart4_initialized)
+  {
+    close(uart4_fd);
+  }
+}
+
 /**
  * @brief Initialize hardware and other resources.
- * @return Status of the initialization.
+ *
+ * This function initializes all required hardware components, including GPIOs,
+ * LCD, and UARTs. If any component fails to initialize, it logs the error,
+ * cleans up already initialized resources, and returns a failure status.
+ *
+ * @return Status of the initialization. Returns SUCCESS if all components are
+ *         initialized successfully, otherwise returns FAILED.
  */
 Status_t init()
 {
   // Initialize GPIOs
-  if (GPIO_init(GPIO_BUTTON_IN, "in") != SUCCESS || GPIO_init(GPIO_BUTTON_OUT, "in") != SUCCESS || GPIO_init(GPIO_BUTTON_NEW, "in") != SUCCESS)
+  if (GPIO_init(GPIO_BUTTON_IN, "in") != SUCCESS)
   {
-    syslog_log(LOG_ERR, __func__, "strerror", "GPIO BUTTON initialization failed", strerror(errno));
+    syslog_log(LOG_ERR, __func__, "strerror", "GPIO BUTTON IN initialization failed", strerror(errno));
+    cleanup_resources();
     return FAILED;
   }
+  gpio_button_in_initialized = true;
+
+  if (GPIO_init(GPIO_BUTTON_OUT, "in") != SUCCESS)
+  {
+    syslog_log(LOG_ERR, __func__, "strerror", "GPIO BUTTON OUT initialization failed", strerror(errno));
+    cleanup_resources();
+    return FAILED;
+  }
+  gpio_button_out_initialized = true;
+
+  if (GPIO_init(GPIO_BUTTON_NEW, "in") != SUCCESS)
+  {
+    syslog_log(LOG_ERR, __func__, "strerror", "GPIO BUTTON NEW initialization failed", strerror(errno));
+    cleanup_resources();
+    return FAILED;
+  }
+  gpio_button_new_initialized = true;
+
   if (GPIO_init(GPIO_BUZZER, "out") != SUCCESS)
   {
     syslog_log(LOG_ERR, __func__, "strerror", "GPIO BUZZER initialization failed", strerror(errno));
+    cleanup_resources();
     return FAILED;
   }
+  gpio_buzzer_initialized = true;
+
   if (GPIO_init(GPIO_LED_RED, "out") != SUCCESS)
   {
-    syslog_log(LOG_ERR, __func__, "strerror", "GPIO LED initialization failed", strerror(errno));
+    syslog_log(LOG_ERR, __func__, "strerror", "GPIO LED RED initialization failed", strerror(errno));
+    cleanup_resources();
     return FAILED;
   }
+  gpio_led_red_initialized = true;
+
+  // Initialize LCD
   if (!lcd20x4_i2c_init())
   {
     syslog_log(LOG_ERR, __func__, "strerr", "LCD initialization failed!", NULL);
+    cleanup_resources();
     return FAILED;
   }
+  lcd_initialized = true;
+
   // Initialize UARTs
   uart2_fd = UART_Init(UART2_DEVICE, UART2_BaudRate);
-  uart4_fd = UART_Init(UART4_DEVICE, UART4_BaudRate);
   if (uart2_fd < 1)
   {
     syslog_log(LOG_ERR, __func__, "strerror", "UART2 initialization failed", strerror(errno));
+    cleanup_resources();
     return FAILED;
   }
+  uart2_initialized = true;
+
+  uart4_fd = UART_Init(UART4_DEVICE, UART4_BaudRate);
   if (uart4_fd < 1)
   {
     syslog_log(LOG_ERR, __func__, "strerror", "UART4 initialization failed", strerror(errno));
+    cleanup_resources();
     return FAILED;
   }
+  uart4_initialized = true;
+
   return SUCCESS;
 }
 
 /**
  * @brief Handle fingerprint operations based on button presses.
- * 
- * This function continuously checks the state of three GPIO buttons: 
- * IN, OUT, and NEW. Depending on which button is pressed, it performs 
- * different actions related to fingerprint recognition and database 
+ *
+ * This function continuously checks the state of three GPIO buttons:
+ * IN, OUT, and NEW. Depending on which button is pressed, it performs
+ * different actions related to fingerprint recognition and database
  * operations. It uses mutexes to ensure thread safety when accessing
  * shared resources like the display.
  */
@@ -107,11 +204,11 @@ void fingerPrint()
     }
     displayLocked = LOCK;
     // Perform fingerprint scan for IN button
-    int id = findFinger(HELLO);             
+    int id = findFinger(HELLO);
     timestamp = getCurrent_UTC_Timestamp(); // get current date and time in UTC format
     if (id > 0)
     {
-      buzzer(); // Activate the buzzer for successful scan
+      buzzer();         // Activate the buzzer for successful scan
       sleep(SLEEP_LCD); // Wait before updating the display
 
       // Write entry to the database
@@ -124,7 +221,7 @@ void fingerPrint()
     else if (id == -1)
     {
       lcd20x4_i2c_puts(1, 0, "No matching in the library"); // show on LCD
-      sleep(SLEEP_LCD);// Wait before clearing the display
+      sleep(SLEEP_LCD);                                     // Wait before clearing the display
     }
     else
     {
@@ -284,7 +381,7 @@ void fingerPrint()
     {
       syslog_log(LOG_ERR, __func__, "strerror", "Error signaling condition variable", strerror(errno));
     }
-    lcd20x4_i2c_clear();// Clear the display
+    lcd20x4_i2c_clear(); // Clear the display
     if (pthread_mutex_unlock(&displayMutex) != MUTEX_OK)
     {
       syslog_log(LOG_ERR, __func__, "strerror", "Error unlocking mutex", strerror(errno));
@@ -306,87 +403,95 @@ void fingerPrint()
 int main()
 {
   Config_t config;
- 
+
+  // syslog initialization
   syslog_init();
+  // signal to kill programm (Ctrl+C)
   setup_sigint_handler();
-  // daemon
-  //setup_signal_handler();
-  //init_daemon();
 
-// Initialize I2C Display
-if(init() == FAILED )
-{ 
-  syslog_close();
-  return 1;
-}
-//Read all data from config file
-if(read_config(&config) == FAILED)
-{
-  syslog_close();
-  return 1;
-}
-    // Initialize the cURL library globally
-    if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK)
-    {
-      syslog_log(LOG_ERR, __func__, "strerror", "Could not initialize cURL", strerror(errno));
-      return EXIT_FAILURE;
-    }
-    // emptyDatabase(); //do this to empty database in FPM
+  // Read all data from config file
+  if (read_config(&config) == FAILED)
+  {
+    syslog_close();
+    return 1;
+  }
+  // Initialize global variables from config file
+  g_server_port = config.server_port;
+  g_month = config.month;
+  strncpy(g_url, config.url, MAX_URL_LENGTH);
+  strncpy(g_url_new_employee, config.url_new_employee, MAX_URL_LENGTH);
+  strncpy(g_url_delete_employee, config.url_delete_employee, MAX_URL_LENGTH);
+  strncpy(g_url_check_delete, config.url_check_delete, MAX_URL_LENGTH);
+  strncpy(g_header, config.header, MAX_HEADER_LENGTH);
+  g_max_retries = config.max_retries;
+  g_db_sleep = config.db_sleep;
+  strncpy(g_lcd_message, config.lcd_message, MAX_LCD_MESSAGE_LENGTH);
 
-    // Initialize global variables from config file
-    g_server_port = config.server_port;
-    g_month = config.month;
-    strncpy(g_url, config.url, MAX_URL_LENGTH);
-    strncpy(g_url_new_employee, config.url_new_employee, MAX_URL_LENGTH);
-    strncpy(g_url_delete_employee,config.url_delete_employee,MAX_URL_LENGTH);
-    strncpy(g_url_check_delete,config.url_check_delete,MAX_URL_LENGTH);
-    strncpy(g_header, config.header, MAX_HEADER_LENGTH);
-    g_max_retries = config.max_retries;
-    g_db_sleep = config.db_sleep;
-    strncpy(g_lcd_message, config.lcd_message, MAX_LCD_MESSAGE_LENGTH);
-    
-    // create or open database
-    DB_open();
+  // Initialize all peripherals and check for initialization failure
+  int retries = 0;
 
-    // Turn off LED
-    int fd_led = GPIO_open(GPIO_LED_RED, O_WRONLY);
-    GPIO_write(fd_led, LED_OFF);
-    GPIO_close(fd_led);
+  while (retries < g_max_retries && init() != SUCCESS)
+  {
+    retries++;
+    // Log the retry attempt
+    syslog_log(LOG_ERR, __func__, "strerror", "Initialization failed, retrying... %d", strerror(errno), retries);
+    sleep(1); // Add some delay between retries if necessary
+  }
+  if (retries == g_max_retries)
+  {
+    syslog_log(LOG_ERR, __func__, "strerror", "Failed to initialize resources after retries", strerror(errno));
+    syslog_close();
+    return EXIT_FAILURE;
+  }
+  // Initialize the cURL library globally
+  if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK)
+  {
+    syslog_log(LOG_ERR, __func__, "strerror", "Could not initialize cURL", strerror(errno));
+    return EXIT_FAILURE;
+  }
+  // emptyDatabase(); //do this to empty database in FPM
 
-    // Initialize the file using the name from the configuration
-    initFile(&file_URL, "URL.txt");
+  // create or open database
+  DB_open();
 
-    // Create a threads
-    if (pthread_create(&thread_datetime, NULL, clockThread, NULL) != THREAD_OK)
-    {
-      syslog_log(LOG_ERR, __func__, "strerror", "Error creating displayThread thread", strerror(errno));
-      curl_global_cleanup();
-      return THREAD_ERROR;
-    }
-    if (pthread_create(&thread_database, NULL, databaseThread, NULL) != THREAD_OK)
-    {
-      syslog_log(LOG_ERR, __func__, "strerror", "Error creating databaseThread thread", strerror(errno));
-      curl_global_cleanup();
-      return THREAD_ERROR;
-    }
-    if (pthread_create(&thread_deletion, NULL, post_requestThread, NULL) != THREAD_OK)
-    {
-      syslog_log(LOG_ERR, __func__, "strerror", "Error creating post_requestThread thread", strerror(errno));
-      curl_global_cleanup();
-      return THREAD_ERROR;
-    }
-    while (!stop)
-    {
-      fingerPrint();
-    }
-    // Wait for the thread to complete
-    pthread_join(thread_datetime, NULL);
-    pthread_join(thread_database, NULL);
-    pthread_join(thread_deletion, NULL);
+  // Turn off LED
+  int fd_led = GPIO_open(GPIO_LED_RED, O_WRONLY);
+  GPIO_write(fd_led, LED_OFF);
+  GPIO_close(fd_led);
 
-    // Cleanup cURL library globally
+  // Initialize the file using the name from the configuration
+  initFile(&file_URL, FILE_NAME);
+
+  // Create a threads
+  if (pthread_create(&thread_datetime, NULL, clockThread, NULL) != THREAD_OK)
+  {
+    syslog_log(LOG_ERR, __func__, "strerror", "Error creating displayThread thread", strerror(errno));
     curl_global_cleanup();
+    return THREAD_ERROR;
+  }
+  if (pthread_create(&thread_database, NULL, databaseThread, NULL) != THREAD_OK)
+  {
+    syslog_log(LOG_ERR, __func__, "strerror", "Error creating databaseThread thread", strerror(errno));
+    curl_global_cleanup();
+    return THREAD_ERROR;
+  }
+  if (pthread_create(&thread_deletion, NULL, post_requestThread, NULL) != THREAD_OK)
+  {
+    syslog_log(LOG_ERR, __func__, "strerror", "Error creating post_requestThread thread", strerror(errno));
+    curl_global_cleanup();
+    return THREAD_ERROR;
+  }
+  while (!stop)
+  {
+    fingerPrint();
+  }
+  // Wait for the thread to complete
+  pthread_join(thread_datetime, NULL);
+  pthread_join(thread_database, NULL);
+  pthread_join(thread_deletion, NULL);
 
-    return EXIT_SUCCESS;
-  return EXIT_FAILURE;
+  // Cleanup cURL library globally
+  curl_global_cleanup();
+
+  return EXIT_SUCCESS;
 }

@@ -19,9 +19,6 @@
 #define UART2_BaudRate B57600
 #define UART4_BaudRate B9600
 
-#define MAX_RETRIES 10
-
-
 int UART_Init(const char* device, speed_t UART_BaudRate);
 void UART_write(int uart_fd,const char* data, int size);
 Status_t UART_read(int uart_fd,char* buffer, int size);

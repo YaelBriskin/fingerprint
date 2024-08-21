@@ -43,7 +43,7 @@
 #define MAX_FINGERPRINT 100
 
 #define CONFIG_NAME "config.conf"
-
+#define FILE_NAME "URL.txt"
 typedef enum {
     FAILED = 0,
     SUCCESS = 1

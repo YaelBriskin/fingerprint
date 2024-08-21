@@ -94,7 +94,7 @@ For debugging and monitoring the system status:
 
 - **Syslog**: All errors and important events are logged using syslog. These logs are available in the system journal and can be used for debugging and monitoring.
 - **Error Indications**: Visual feedback (e.g., red LED) is provided to indicate connection errors or other issues to assist in troubleshooting.
-
+   journalctl _COMM=fingerprint
 
 ## Contact
 If you have any questions, feel free to reach out via email: yaelbriskin@gmail.com

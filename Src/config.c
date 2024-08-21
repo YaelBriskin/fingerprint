@@ -1,6 +1,6 @@
 #include "../Inc/config.h"
 
-
+// Configuration variables for server settings, URLs, retries, and display messages
 int g_server_port;
 int g_month;
 char g_url[MAX_URL_LENGTH];
@@ -12,7 +12,19 @@ int g_max_retries;
 int g_db_sleep;
 char g_lcd_message[MAX_LCD_MESSAGE_LENGTH];
 
-
+/**
+ * @brief Reads configuration data from a file and populates the provided config structure.
+ *
+ * This function opens the configuration file specified by `CONFIG_NAME` and reads various
+ * configuration parameters from it. It populates the fields of the `Config_t` structure 
+ * with values read from the file. In case of any errors during reading, it logs the error, 
+ * closes the file, and returns a failure status.
+ *
+ * @param config Pointer to a `Config_t` structure that will be populated with configuration data.
+ * 
+ * @return Status of the configuration reading. Returns SUCCESS if all parameters are read
+ *         successfully, otherwise returns FAILED.
+ */
 Status_t read_config(Config_t *config) 
 {
     FILE *file = fopen(CONFIG_NAME, "r");

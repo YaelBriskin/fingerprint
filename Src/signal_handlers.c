@@ -30,11 +30,12 @@ extern FILE *file_URL;
  */
 void handle_sigint(int sig) 
 {
+    printf("handle_sigint()\n");
     syslog_log(LOG_INFO, __func__, "stderr", "SIGINT signal received");
     
     // Terminate threads
     stop = 1;
-
+    printf("stop=1\n");
     // Clean up resources
     curl_global_cleanup();
     DB_close();
@@ -87,6 +88,7 @@ void handle_sigint(int sig)
  */
 void setup_sigint_handler()
 {
+    printf("setup_sigint_handler()\n");
     // Define a sigaction structure to specify the signal handler
     struct sigaction sa;
     sa.sa_handler = handle_sigint;
