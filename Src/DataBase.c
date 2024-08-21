@@ -397,3 +397,53 @@ int DB_check_id_exists(int id)
         return FAILED; // ID not found
     }
 }
+
+/**
+ * @brief Restores a record in the database with default values.
+ *
+ * Attempts to insert a record with the specified ID back into the database if it was previously
+ * deleted. The record is inserted with default values for columns other than the ID.
+ *
+ * @param id The ID of the record to be restored.
+ * @return Returns `SUCCESS` if the record is successfully restored in the database.
+ *         Returns `FAILED` if the insertion fails or if any error occurs during the operation.
+ */
+int DB_restore(int id)
+{
+    // Mutex lock for thread safety
+    if (pthread_mutex_lock(&sqlMutex) == MUTEX_ERROR)
+    {
+        syslog_log(LOG_ERR, __func__, "format", "Failed to lock mutex");
+        return ERROR;
+    }
+    
+    // SQL query to restore the record
+    const char *query = "INSERT INTO employees (ID) VALUES (?);";
+    sqlite3_stmt *stmt;
+
+    // Prepare the SQL statement
+    if (sqlite3_prepare_v2(db_attendance, query, -1, &stmt, NULL) != SQLITE_OK)
+    {
+        syslog_log(LOG_ERR, __func__, "format", "Failed to prepare query: %s", sqlite3_errmsg(db_attendance));
+        pthread_mutex_unlock(&sqlMutex);
+        return FAILED;
+    }
+
+    // Bind the ID parameter
+    sqlite3_bind_int(stmt, 1, id);
+    
+    // Execute the SQL statement
+    if (sqlite3_step(stmt) != SQLITE_DONE)
+    {
+        syslog_log(LOG_ERR, __func__, "format", "Failed to execute query: %s", sqlite3_errmsg(db_attendance));
+        sqlite3_finalize(stmt);
+        pthread_mutex_unlock(&sqlMutex);
+        return FAILED;
+    }
+
+    // Finalize the statement and unlock the mutex
+    sqlite3_finalize(stmt);
+    pthread_mutex_unlock(&sqlMutex);
+    
+    return SUCCESS;
+}

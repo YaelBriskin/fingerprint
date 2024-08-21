@@ -2,19 +2,48 @@
 
 pthread_mutex_t httpMutex = PTHREAD_MUTEX_INITIALIZER;
 
-// Callback function for writing data to a file
+/**
+ * @brief Callback function for writing POST data to a file.
+ *
+ * This function is used by cURL to write the response data to a file. It writes the data received from
+ * the POST request into the file specified by the `stream` parameter.
+ *
+ * @param ptr Pointer to the data to be written.
+ * @param size Size of each data element.
+ * @param nmemb Number of data elements.
+ * @param stream File pointer to write data to.
+ * @return The number of bytes written.
+ */
 size_t PostWriteCallback(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
     size_t written = fwrite(ptr, size, nmemb, stream);
+    if (written != size * nmemb)
+    {
+        writeToFile(file_URL, __func__, "Failed to write complete data to file");
+    }
     return written;
 }
-// Callback function to write data to string
+
+/**
+ * @brief Callback function to write data to a string buffer.
+ *
+ * This function is used by cURL to write the response data to a dynamically allocated string buffer.
+ * It appends the received data to the buffer and adjusts the buffer size accordingly.
+ *
+ * @param ptr Pointer to the data to be written.
+ * @param size Size of each data element.
+ * @param nmemb Number of data elements.
+ * @param strBuf Pointer to the StringBuffer structure where data will be stored.
+ * @return The number of bytes written.
+ */
 size_t GetWriteCallback(void *ptr, size_t size, size_t nmemb, struct StringBuffer *strBuf)
 {
     size_t new_data_size = size * nmemb;
     char *new_buffer = realloc(strBuf->buffer, strBuf->size + new_data_size + 1);
     if (new_buffer == NULL)
     {
+        writeToFile(file_URL, __func__, "Failed to allocate memory for response buffer");
+        free(strBuf->buffer);
         return 0;
     }
 
@@ -375,69 +404,92 @@ Status_t send_json_ack_delete(int id)
  */
 int process_response(const char *response)
 {
+    int success = SUCCESS;
+    char log_message[MAX_LOG_MESSAGE_LENGTH];
     // Parse JSON response
     cJSON *json = cJSON_Parse(response);
     if (json == NULL)
     {
-        char log_message[MAX_LOG_MESSAGE_LENGTH];
         snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to send request for deletions. Error: %s", strerror(errno));
         writeToFile(file_URL, __func__, log_message);
         return FAILED;
     }
+
     // Check if the response is an array
-    if (cJSON_IsArray(json))
+    if (!cJSON_IsArray(json))
     {
-        int id_count = cJSON_GetArraySize(json);
-        for (int i = 0; i < id_count; ++i)
-        {
-            cJSON *id_item = cJSON_GetArrayItem(json, i);
-            // Check if each element is a number
-            if (cJSON_IsNumber(id_item))
-            {
-                int id_to_delete = id_item->valueint;
-                if (DB_delete(id_to_delete) == SUCCESS && deleteModel((uint16_t)id_to_delete) == SUCCESS)
-                {
-                    if (send_json_ack_delete(id_to_delete) == FAILED)
-                    {
-                        char log_message[MAX_LOG_MESSAGE_LENGTH];
-                        snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to send acknowledgment for deletion of employee with ID: %d", id_to_delete);
-                        writeToFile(file_URL, __func__, log_message);
-                        cJSON_Delete(json);
-                        return FAILED;
-                    }
-                    char log_message[MAX_LOG_MESSAGE_LENGTH];
-                    snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Successfully deleted employee with ID: %d\n", id_to_delete);
-                    writeToFile(file_URL, __func__, log_message);
-                }
-                else
-                {
-                    char log_message[MAX_LOG_MESSAGE_LENGTH];
-                    snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to delete employee with ID: %d\n", id_to_delete);
-                    writeToFile(file_URL, __func__, log_message);
-                }
-            }
-            else
-            {
-                char log_message[MAX_LOG_MESSAGE_LENGTH];
-                snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Invalid ID format in response. Error: %s", strerror(errno));
-                writeToFile(file_URL, __func__, log_message);
-            }
-        }
-    }
-    else if (cJSON_IsNull(json))
-    {
-        writeToFile(file_URL, __func__, "No IDs to delete in the response");
-    }
-    else
-    {
-        char log_message[MAX_LOG_MESSAGE_LENGTH];
-        snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Invalid JSON format: expected an array. Error: %s", strerror(errno));
+        snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Invalid JSON format: expected an array. Error: %s", cJSON_GetErrorPtr());
         writeToFile(file_URL, __func__, log_message);
         cJSON_Delete(json);
         return FAILED;
     }
+    //Getting the number of elements to remove from JSON-array
+    int id_count = cJSON_GetArraySize(json);
+    if (id_count == 0)
+    {
+        writeToFile(file_URL, __func__, "No IDs to delete in the response");
+    }
+    for (int i = 0; i < id_count; ++i)
+    {
+        cJSON *id_item = cJSON_GetArrayItem(json, i);
+        // Check if each element is a number
+        if (!cJSON_IsNumber(id_item))
+        {
+            snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Invalid ID format in response. Error: %s", cJSON_GetErrorPtr());
+            writeToFile(file_URL, __func__, log_message);
+            // Continue to the next ID even if one is invalid
+            continue; 
+        }
+
+        int id_to_delete = id_item->valueint;
+        // Check if the ID exists in the database
+        if (DB_check_id_exists(id_to_delete) == FAILED)
+        {
+            snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "ID %d does not exist in the database. Skipping deletion.", id_to_delete);
+            writeToFile(file_URL, __func__, log_message);
+            // Skip to the next ID
+            continue; 
+        }
+        // Attempt to delete from the database
+        int db_result = DB_delete(id_to_delete);
+        if (db_result == FAILED)
+        {
+            char log_message[MAX_LOG_MESSAGE_LENGTH];
+            snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to delete employee with ID: %d from the database", id_to_delete);
+            writeToFile(file_URL, __func__, log_message);
+            // Skip to the next ID if database deletion failed
+            continue; 
+        }
+        // Attempt to delete from the fingerprint module
+        int model_result = deleteModel((uint16_t)id_to_delete);
+        if (model_result != SUCCESS)
+        {
+            snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to delete employee with ID: %d from the fingerprint module", id_to_delete);
+            writeToFile(file_URL, __func__, log_message);
+            // Restore the record in the database if deletion from module failed
+            if (DB_restore(id_to_delete) == FAILED)
+            {
+                snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to restore employee with ID: %d in the database", id_to_delete);
+                writeToFile(file_URL, __func__, log_message);
+            }
+            continue; // Skip to the next ID
+        }
+        // Send acknowledgment for deletion
+        if (send_json_ack_delete(id_to_delete) == FAILED)
+            {
+                snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to send acknowledgment for deletion of employee with ID: %d", id_to_delete);
+                writeToFile(file_URL, __func__, log_message);
+                cJSON_Delete(json);
+                return FAILED;
+            }
+            else
+            {
+                char log_message[MAX_LOG_MESSAGE_LENGTH];
+                snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Successfully deleted employee with ID: %d\n", id_to_delete);
+                writeToFile(file_URL, __func__, log_message);
+            }
+        }
     // Clean up the JSON data structure
     cJSON_Delete(json);
     return SUCCESS;
-
 }
