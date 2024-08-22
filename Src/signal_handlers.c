@@ -6,9 +6,13 @@ extern pthread_t thread_deletion;
 // External declarations of condition variables
 extern pthread_cond_t displayCond;
 extern pthread_cond_t databaseCond;
+extern pthread_cond_t requestCond;
+
 // External declarations of mutexes
 extern pthread_mutex_t displayMutex;
 extern pthread_mutex_t databaseMutex;
+extern pthread_mutex_t requestMutex;
+
 extern pthread_mutex_t sqlMutex;
 
 extern volatile sig_atomic_t stop;
@@ -30,21 +34,52 @@ extern FILE *file_URL;
  */
 void handle_sigint(int sig) 
 {
-    printf("handle_sigint()\n");
+    int retval;
     syslog_log(LOG_INFO, __func__, "stderr", "SIGINT signal received");
     
-    // Terminate threads
+    // Set the stop flag
     stop = 1;
-    printf("stop=1\n");
-    // Clean up resources
-    curl_global_cleanup();
-    DB_close();
-    UART_close(uart2_fd);
-    UART_close(uart4_fd);
-    I2C_close();
-    closeFile(file_URL);
 
-        // Destroy condition variables and mutexes with error checking
+    // Signal the condition variables to wake up waiting threads
+    pthread_mutex_lock(&displayMutex);
+    if (pthread_cond_signal(&displayCond) != 0) 
+    {
+        syslog_log(LOG_ERR, __func__, "strerror", "Error signaling displayCond", strerror(errno));
+    }
+    pthread_mutex_unlock(&displayMutex);
+    
+    pthread_mutex_lock(&databaseMutex);
+    if (pthread_cond_signal(&databaseCond) != 0) 
+    {
+        syslog_log(LOG_ERR, __func__, "strerror", "Error signaling databaseCond", strerror(errno));
+    }
+    pthread_mutex_unlock(&databaseMutex);
+
+    pthread_mutex_lock(&requestMutex);
+    if (pthread_cond_signal(&requestCond) != 0) 
+    {
+        syslog_log(LOG_ERR, __func__, "strerror", "Error signaling requestCond", strerror(errno));
+    }
+    pthread_mutex_unlock(&requestMutex);
+
+    // Wait for threads to finish
+    retval = pthread_join(thread_datetime, NULL);
+    if (retval != 0) 
+    {
+        syslog_log(LOG_ERR, __func__, "strerror", "Error joining thread_datetime", strerror(retval));
+    }
+    retval = pthread_join(thread_database, NULL);
+    if (retval != 0) 
+    {
+        syslog_log(LOG_ERR, __func__, "strerror", "Error joining thread_database", strerror(retval));
+    }
+    retval = pthread_join(thread_deletion, NULL);
+    if (retval != 0) 
+    {
+        syslog_log(LOG_ERR, __func__, "strerror", "Error joining thread_deletion", strerror(retval));
+    }
+
+    // Destroy condition variables and mutexes with error checking
     if (pthread_cond_destroy(&databaseCond) != 0) 
     {
         syslog_log(LOG_ERR, __func__, "strerror", "Error destroying databaseCond", strerror(errno));
@@ -65,15 +100,16 @@ void handle_sigint(int sig)
     {
         syslog_log(LOG_ERR, __func__, "strerror", "Error destroying displayMutex", strerror(errno));
     }
-
+    // Clean up resources
+    curl_global_cleanup();
+    DB_close();
+    UART_close(uart2_fd);
+    UART_close(uart4_fd);
+    I2C_close();
+    closeFile(file_URL);
+   
     // Close syslog last
     syslog_close();
-    
-    // Wait for the thread to complete
-    pthread_join(thread_datetime, NULL);
-    pthread_join(thread_database, NULL);
-    pthread_join(thread_deletion, NULL);
-
     // Exit the program
     exit(0);
 }
@@ -88,7 +124,6 @@ void handle_sigint(int sig)
  */
 void setup_sigint_handler()
 {
-    printf("setup_sigint_handler()\n");
     // Define a sigaction structure to specify the signal handler
     struct sigaction sa;
     sa.sa_handler = handle_sigint;

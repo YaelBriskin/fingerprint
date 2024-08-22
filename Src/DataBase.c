@@ -95,7 +95,7 @@ void DB_newEmployee()
     if (pthread_mutex_lock(&sqlMutex) == MUTEX_ERROR)
     {
         syslog_log(LOG_ERR, __func__, "format", "Failed to lock mutex");
-        return FAILED;
+        return ;
     }
     sqlite3_stmt *stmt;
     const char *sql = "INSERT INTO employees DEFAULT VALUES;";

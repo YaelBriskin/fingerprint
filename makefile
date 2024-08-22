@@ -31,7 +31,7 @@ dirCreation:
 	mkdir -p $(BUILD_DIR)
 
 $(PROGRAM_MAIN): $(ALL_OBJECTS) | print_end 
-	$(CC) $(PROGRAM_MAIN) $(DEBUG) $^  $(FLAGS) -o $(OUT_DIR)/$(PROGRAM_MAIN:.$(FE)=.out) 
+	$(CC) $(PROGRAM_MAIN) $(DEBUG) $^  $(FLAGS) -o $(OUT_DIR)/fingerprint
 	@echo "Build complete."
 
 vpath %.$(FE) $(sort $(dir $(ALL_SOURCES)))

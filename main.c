@@ -17,7 +17,6 @@
 #include "./Inc/threads.h"
 #include "./Inc/config.h"
 #include "./Inc/syslog_util.h"
-#include "./Inc/daemon.h"
 #include "./Inc/signal_handlers.h"
 
 volatile bool isRunning = true;
@@ -76,7 +75,7 @@ void cleanup_resources()
   // Clean up LCD
   if (lcd_initialized)
   {
-    lcd20x4_i2c_close();
+    I2C_close();
   }
   // Clean up UARTs
   if (uart2_initialized)
