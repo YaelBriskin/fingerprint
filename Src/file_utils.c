@@ -1,8 +1,9 @@
 #include "../Inc/file_utils.h"
 
 // Global variables for file pointers
-FILE *file_global = NULL;
 FILE *file_URL = NULL;
+
+pthread_mutex_t fileMutex = PTHREAD_MUTEX_INITIALIZER;
 
 /**
  * @brief Initializes the log file.
@@ -32,13 +33,25 @@ void initFile(FILE **file, const char *file_name)
  */
 void writeToFile(FILE *file, const char *func_name, const char *message) 
 {
+    // Lock the mutex to ensure exclusive access to the file
+    if (pthread_mutex_lock(&fileMutex) != 0)
+    {
+        syslog(LOG_ERR, "Error in %s: Failed to lock mutex: %s", func_name, strerror(errno));
+        return;
+    }
+    // Check if the file is open
     if (file != NULL) 
     {
-        fprintf(file, "%s: %s\n", func_name, message);
+        fprintf(file, "Error in %s: %s\n", func_name, message);
     } else 
     {
         syslog_log(LOG_ERR, __func__, "strerror", "File not open", strerror(errno));
 
+    }
+    // Unlock the mutex to allow other threads to access the file
+    if (pthread_mutex_unlock(&fileMutex) != 0) 
+    {
+        syslog(LOG_ERR, "Failed to unlock mutex in %s: %s", func_name, strerror(errno));
     }
 }
 /**

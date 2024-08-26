@@ -65,6 +65,7 @@
         "i2c.h": "c",
         "uart.h": "c",
         "syslog_util.h": "c",
-        "fp_delete.h": "c"
+        "fp_delete.h": "c",
+        "pwm.h": "c"
     }
 }

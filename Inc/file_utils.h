@@ -3,6 +3,7 @@
 
 #include "../Inc/syslog_util.h"
 #include <stdio.h>
+#include <pthread.h>
 
 
 extern FILE *file_global;
