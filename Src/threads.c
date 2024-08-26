@@ -15,12 +15,33 @@ pthread_mutex_t databaseMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t requestCond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t requestMutex = PTHREAD_MUTEX_INITIALIZER;
 
+void check_and_clear_file(const char *file_name)
+{
+    struct stat st;
+    if (stat(file_name, &st) == 0)
+    {
+        if (st.st_size > MAX_FILE_SIZE)
+        {
+            FILE *file = fopen(file_name, "w");
+            if (file != NULL)
+
+                fclose(file);
+            else
+
+                perror("Failed to clear file");
+        }
+    }
+    else
+    {
+        perror("Failed to get file status");
+    }
+}
 /**
  * @brief This function returns the current time in UTC format as an integer timestamp.
  *
  * @return The current UTC time as an integer timestamp.
  */
-int getCurrent_UTC_Timestamp() 
+int getCurrent_UTC_Timestamp()
 {
     // Get the current time
     time_t current_time = time(NULL);
@@ -35,7 +56,7 @@ int getCurrent_UTC_Timestamp()
 void buzzer()
 {
     int fd_buzzer = GPIO_open(GPIO_BUZZER, O_WRONLY);
-    if (fd_buzzer < 0) 
+    if (fd_buzzer < 0)
     {
         syslog_log(LOG_ERR, __func__, "stderr", "Failed to open GPIO_BUZZER");
         return;
@@ -63,23 +84,22 @@ void *databaseThread(void *arg)
 
     while (!stop)
     {
-        int fd_led = GPIO_open(GPIO_LED_RED,O_WRONLY);
-        if (fd_led < 0) 
+        int fd_led = GPIO_open(GPIO_LED_RED, O_WRONLY);
+        if (fd_led < 0)
         {
             syslog_log(LOG_ERR, __func__, "stderr", "Failed to open GPIO_LED_RED");
             pthread_exit(NULL);
         }
-        //checks whether there is data in the database that has not yet been sent and 
-        //if there is any, it sends it to the server
-        if (DB_find()!= 1)
+        // checks whether there is data in the database that has not yet been sent and
+        // if there is any, it sends it to the server
+        if (DB_find() != 1)
         {
-            //if it fails to send data 10 times in a row, the LED will light up
+            // if it fails to send data 10 times in a row, the LED will light up
             if (++count == g_max_retries)
             {
-                //led on
+                // led on
                 GPIO_write(fd_led, LED_ON);
             }
-
         }
         else
         {
@@ -89,7 +109,7 @@ void *databaseThread(void *arg)
         }
         GPIO_close(GPIO_LED_RED);
         clock_gettime(CLOCK_REALTIME, &timeout);
-        timeout.tv_sec += g_db_sleep;  
+        timeout.tv_sec += g_db_sleep;
 
         pthread_mutex_lock(&databaseMutex);
         pthread_cond_timedwait(&databaseCond, &databaseMutex, &timeout);
@@ -125,31 +145,31 @@ void *clockThread(void *arg)
             DB_delete_old_records(rawtime);
         }
 
-        //Updates the last checked day
+        // Updates the last checked day
         lastDay = timeinfo->tm_mday;
 
         char timeString[TIME_STR_LEN] = {'\0'};
         strftime(timeString, TIME_STR_LEN, "%H:%M %d/%m/%y", timeinfo);
         pthread_mutex_lock(&displayMutex);
-        while (!stop) 
-        {            
-            //pthread_cond_wait(&displayCond, &displayMutex);
+        while (!stop)
+        {
+            // pthread_cond_wait(&displayCond, &displayMutex);
             clock_gettime(CLOCK_REALTIME, &timeout);
             timeout.tv_sec += 1;
             // Wait for a signal or timer to expire
             int result = pthread_cond_timedwait(&displayCond, &displayMutex, &timeout);
             // If time has expired, exit the wait loop
-            if (result == ETIMEDOUT) 
+            if (result == ETIMEDOUT)
             {
                 break;
             }
         }
-        //Updates the display with the current time.
+        // Updates the display with the current time.
         lcd20x4_i2c_puts(0, 0, timeString);
-        lcd20x4_i2c_puts(2, 0, g_lcd_message); 
+        lcd20x4_i2c_puts(2, 0, g_lcd_message);
         // Wait for one minute before updating the display again
         clock_gettime(CLOCK_REALTIME, &timeout);
-        timeout.tv_sec += ONE_MINUTE;  
+        timeout.tv_sec += ONE_MINUTE;
         pthread_cond_timedwait(&displayCond, &displayMutex, &timeout);
         pthread_mutex_unlock(&displayMutex);
     }
@@ -169,12 +189,11 @@ void *post_requestThread(void *arg)
     struct timespec timeout;
     while (!stop)
     {
+        check_and_clear_file(FILE_NAME);
         int result = send_get_request(g_url_delete_employee);
         if (result != SUCCESS)
         {
-            char log_message[MAX_LOG_MESSAGE_LENGTH];
-            snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to send request for deletions. Error: %s", strerror(errno));
-            writeToFile(file_URL, __func__, log_message);
+            writeToFile(file_URL, __func__, "Failed to send request for deletions.");
             continue;
         }
         // Set the timeout for the next request

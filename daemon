@@ -23,11 +23,11 @@ WantedBy=multi-user.target
 sudo systemctl daemon-reload
 
 sudo su
-systemctl start mydaemon
-systemctl enable mydaemon
-systemctl status mydaemon
+systemctl start fingerprint
+systemctl enable fingerprint
+systemctl status fingerprint
 ---------------
-systemctl stop mydaemon
+systemctl stop fingerprint
 
 
 sudo reboot

@@ -19,7 +19,20 @@
 #include "./Inc/syslog_util.h"
 #include "./Inc/signal_handlers.h"
 
-volatile bool isRunning = true;
+// External declarations of condition variables
+extern pthread_cond_t displayCond;
+extern pthread_cond_t databaseCond;
+extern pthread_cond_t requestCond;
+
+// External declarations of mutexes
+extern pthread_mutex_t displayMutex;
+extern pthread_mutex_t databaseMutex;
+extern pthread_mutex_t requestMutex;
+
+extern pthread_mutex_t sqlMutex;
+// External declarations of file
+extern FILE *file_URL;
+
 int uart2_fd, uart4_fd;
 // Flag to stop threads
 volatile sig_atomic_t stop = 0;
@@ -489,8 +502,20 @@ int main()
   pthread_join(thread_database, NULL);
   pthread_join(thread_deletion, NULL);
 
-  // Cleanup cURL library globally
-  curl_global_cleanup();
+   pthread_cond_destroy(&databaseCond);
+    pthread_cond_destroy(&displayCond);
+    pthread_mutex_destroy(&sqlMutex);
+    pthread_mutex_destroy(&databaseMutex);
+    pthread_mutex_destroy(&displayMutex);
+
+    curl_global_cleanup();
+    DB_close();
+    UART_close(uart2_fd);
+    UART_close(uart4_fd);
+    I2C_close();
+    closeFile(file_URL);
+
+    syslog_close();
 
   return EXIT_SUCCESS;
 }

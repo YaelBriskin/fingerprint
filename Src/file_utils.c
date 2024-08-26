@@ -34,7 +34,7 @@ void writeToFile(FILE *file, const char *func_name, const char *message)
 {
     if (file != NULL) 
     {
-        fprintf(file, "Error in %s: %s\n", func_name, message);
+        fprintf(file, "%s: %s\n", func_name, message);
     } else 
     {
         syslog_log(LOG_ERR, __func__, "strerror", "File not open", strerror(errno));

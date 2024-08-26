@@ -1,6 +1,7 @@
 #ifndef THREADS_H
 #define THREADS_H
 
+#include <sys/stat.h>
 #include <pthread.h>
 #include <time.h>
 #include <stdio.h>

@@ -20,7 +20,8 @@
 #define SLEEP_DURATION 4
 #define ONE_MINUTE 60 
 #define MONTH 2
-#define CHECK_INTERVAL (24 * 60 * 60) // 24 hours in seconds
+#define CHECK_INTERVAL 60//(24 * 60 * 60) // 24 hours in seconds
+#define MAX_FILE_SIZE 10485760 // 10 MB
 
 #define TRUE "true"
 #define FALSE "false"

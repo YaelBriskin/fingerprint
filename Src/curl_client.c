@@ -2,6 +2,11 @@
 
 pthread_mutex_t httpMutex = PTHREAD_MUTEX_INITIALIZER;
 
+struct StringBuffer
+{
+    char *buffer;
+    size_t size;
+};
 /**
  * @brief Callback function for writing POST data to a file.
  *
@@ -36,9 +41,12 @@ size_t PostWriteCallback(void *ptr, size_t size, size_t nmemb, FILE *stream)
  * @param strBuf Pointer to the StringBuffer structure where data will be stored.
  * @return The number of bytes written.
  */
-size_t GetWriteCallback(void *ptr, size_t size, size_t nmemb, struct StringBuffer *strBuf)
+size_t GetWriteCallback(void *ptr, size_t size, size_t nmemb, void *userp)
 {
     size_t new_data_size = size * nmemb;
+    struct StringBuffer *strBuf = (struct StringBuffer *)userp;
+
+    // Reallocate memory for the buffer
     char *new_buffer = realloc(strBuf->buffer, strBuf->size + new_data_size + 1);
     if (new_buffer == NULL)
     {
@@ -48,6 +56,8 @@ size_t GetWriteCallback(void *ptr, size_t size, size_t nmemb, struct StringBuffe
     }
 
     strBuf->buffer = new_buffer;
+
+    // Copy the new data to the buffer
     memcpy(strBuf->buffer + strBuf->size, ptr, new_data_size);
     strBuf->size += new_data_size;
     strBuf->buffer[strBuf->size] = '\0';
@@ -87,7 +97,6 @@ int send_post_request(const char *post_data, const char *URL)
         if (headers == NULL)
         {
             curl_easy_cleanup(curl);
-            curl_global_cleanup();
             writeToFile(file_URL, __func__, "Failed to set HTTP headers");
             pthread_mutex_unlock(&httpMutex);
             return FAILED;
@@ -157,62 +166,72 @@ int send_get_request(const char *URL)
         writeToFile(file_URL, __func__, "Failed to lock mutex");
         return FAILED;
     }
-
     curl = curl_easy_init();
-    if (curl)
-    {
-        // Set the URL to which the request will be sent
-        curl_easy_setopt(curl, CURLOPT_URL, URL);
-        // Setting the request method (GET)
-        curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
-
-        // Add a callback function to record response data
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, GetWriteCallback);
-        // Specify the buffer where the response data will be written
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-
-        // Execute the request
-        res = curl_easy_perform(curl);
-        // Check the server response status code
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-        // Check the success of the request
-        if (res != CURLE_OK)
-        {
-            char log_message[MAX_LOG_MESSAGE_LENGTH];
-            snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "curl_easy_perform() failed. ERROR: %s", curl_easy_strerror(res));
-            writeToFile(file_URL, __func__, log_message);
-            curl_easy_cleanup(curl);
-            pthread_mutex_unlock(&httpMutex);
-            return FAILED;
-        }
-        else if (response_code >= 400)
-        {
-            char log_message[MAX_LOG_MESSAGE_LENGTH];
-            snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "HTTP request failed with response code: %ld", response_code);
-            writeToFile(file_URL, __func__, log_message);
-            curl_easy_cleanup(curl);
-            pthread_mutex_unlock(&httpMutex);
-            return FAILED;
-        }
-
-        // Process the response data
-        if (response.size > 0)
-        {
-            if (process_response(response.buffer) != SUCCESS)
-            {
-                curl_easy_cleanup(curl);
-                pthread_mutex_unlock(&httpMutex);
-                return FAILED;
-            }
-        }
-        // Release resources
-        curl_easy_cleanup(curl);
-    }
-    else
+    if (!curl)
     {
         pthread_mutex_unlock(&httpMutex);
         return FAILED;
     }
+    struct curl_slist *headers = NULL;
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    headers = curl_slist_append(headers, g_header);
+
+    if (headers == NULL)
+    {
+        curl_easy_cleanup(curl);
+        writeToFile(file_URL, __func__, "Failed to set HTTP headers");
+        pthread_mutex_unlock(&httpMutex);
+        return FAILED;
+    }
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    // Set the URL to which the request will be sent
+    curl_easy_setopt(curl, CURLOPT_URL, URL);
+    // curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10);
+    //  Setting the request method (GET)
+    curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+
+    // Add a callback function to record response data
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, GetWriteCallback);
+    // Specify the buffer where the response data will be written
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+
+    // Execute the request
+    res = curl_easy_perform(curl);
+    // Check the server response status code
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+    // Check the success of the request
+    if (res != CURLE_OK)
+    {
+        char log_message[MAX_LOG_MESSAGE_LENGTH];
+        snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "curl_easy_perform() failed. ERROR: %s", curl_easy_strerror(res));
+        writeToFile(file_URL, __func__, log_message);
+        curl_easy_cleanup(curl);
+        pthread_mutex_unlock(&httpMutex);
+        return FAILED;
+    }
+    else if (response_code != 200)
+    {
+        char log_message[MAX_LOG_MESSAGE_LENGTH];
+        snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "HTTP request failed with response code: %ld", response_code);
+        writeToFile(file_URL, __func__, log_message);
+        curl_easy_cleanup(curl);
+        pthread_mutex_unlock(&httpMutex);
+        return FAILED;
+    }
+
+    // Process the response data
+    if (response.size > 0)
+    {
+        if (process_response(response.buffer) != SUCCESS)
+        {
+            curl_easy_cleanup(curl);
+            pthread_mutex_unlock(&httpMutex);
+            return FAILED;
+        }
+    }
+    // Release resources
+    curl_slist_free_all(headers);
+    curl_easy_cleanup(curl);
 
     // Free the allocated buffer
     if (response.buffer != NULL)
@@ -249,6 +268,18 @@ int send_delete_request(const char *URL, const char *data)
     curl = curl_easy_init();
     if (curl)
     {
+        struct curl_slist *headers = NULL;
+        headers = curl_slist_append(headers, "Content-Type: application/json");
+        headers = curl_slist_append(headers, g_header);
+
+        if (headers == NULL)
+        {
+            curl_easy_cleanup(curl);
+            writeToFile(file_URL, __func__, "Failed to set HTTP headers");
+            pthread_mutex_unlock(&httpMutex);
+            return FAILED;
+        }
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         // Set the URL to which the request will be sent
         curl_easy_setopt(curl, CURLOPT_URL, URL);
         // Setting the request method (DELETE)
@@ -282,6 +313,7 @@ int send_delete_request(const char *URL, const char *data)
             result = FAILED;
         }
         // Release resources
+        curl_slist_free_all(headers);
         curl_easy_cleanup(curl);
     }
     else
@@ -410,8 +442,7 @@ int process_response(const char *response)
     cJSON *json = cJSON_Parse(response);
     if (json == NULL)
     {
-        snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to send request for deletions. Error: %s", strerror(errno));
-        writeToFile(file_URL, __func__, log_message);
+        writeToFile(file_URL, __func__, "Failed to send request for deletions");
         return FAILED;
     }
 
@@ -423,7 +454,7 @@ int process_response(const char *response)
         cJSON_Delete(json);
         return FAILED;
     }
-    //Getting the number of elements to remove from JSON-array
+    // Getting the number of elements to remove from JSON-array
     int id_count = cJSON_GetArraySize(json);
     if (id_count == 0)
     {
@@ -438,44 +469,38 @@ int process_response(const char *response)
             snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Invalid ID format in response. Error: %s", cJSON_GetErrorPtr());
             writeToFile(file_URL, __func__, log_message);
             // Continue to the next ID even if one is invalid
-            continue; 
+            continue;
         }
 
         int id_to_delete = id_item->valueint;
         // Check if the ID exists in the database
-        if (DB_check_id_exists(id_to_delete) == FAILED)
+        if (DB_check_id_exists(id_to_delete) == SUCCESS)
         {
-            snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "ID %d does not exist in the database. Skipping deletion.", id_to_delete);
-            writeToFile(file_URL, __func__, log_message);
-            // Skip to the next ID
-            continue; 
-        }
-        // Attempt to delete from the database
-        int db_result = DB_delete(id_to_delete);
-        if (db_result == FAILED)
-        {
-            char log_message[MAX_LOG_MESSAGE_LENGTH];
-            snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to delete employee with ID: %d from the database", id_to_delete);
-            writeToFile(file_URL, __func__, log_message);
-            // Skip to the next ID if database deletion failed
-            continue; 
-        }
-        // Attempt to delete from the fingerprint module
-        int model_result = deleteModel((uint16_t)id_to_delete);
-        if (model_result != SUCCESS)
-        {
-            snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to delete employee with ID: %d from the fingerprint module", id_to_delete);
-            writeToFile(file_URL, __func__, log_message);
-            // Restore the record in the database if deletion from module failed
-            if (DB_restore(id_to_delete) == FAILED)
+            // Attempt to delete from the database
+            int db_result = DB_delete(id_to_delete);
+            if (db_result == FAILED)
             {
-                snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to restore employee with ID: %d in the database", id_to_delete);
+                snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to delete employee with ID: %d from the database", id_to_delete);
                 writeToFile(file_URL, __func__, log_message);
+                // Skip to the next ID if database deletion failed
+                continue;
             }
-            continue; // Skip to the next ID
-        }
-        // Send acknowledgment for deletion
-        if (send_json_ack_delete(id_to_delete) == FAILED)
+            // Attempt to delete from the fingerprint module
+            int model_result = deleteModel((uint16_t)id_to_delete);
+            if (model_result != SUCCESS)
+            {
+                snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to delete employee with ID: %d from the fingerprint module", id_to_delete);
+                writeToFile(file_URL, __func__, log_message);
+                // Restore the record in the database if deletion from module failed
+                if (DB_restore(id_to_delete) == FAILED)
+                {
+                    snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to restore employee with ID: %d in the database", id_to_delete);
+                    writeToFile(file_URL, __func__, log_message);
+                }
+                continue; // Skip to the next ID
+            }
+            // Send acknowledgment for deletion
+            if (send_json_ack_delete(id_to_delete) == FAILED)
             {
                 snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to send acknowledgment for deletion of employee with ID: %d", id_to_delete);
                 writeToFile(file_URL, __func__, log_message);
@@ -489,6 +514,21 @@ int process_response(const char *response)
                 writeToFile(file_URL, __func__, log_message);
             }
         }
+        else
+        {
+            // If ID does not exist in the database, send acknowledgment
+            if (send_json_ack_delete(id_to_delete) == FAILED)
+            {
+                snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Failed to send acknowledgment for deletion of employee with ID: %d", id_to_delete);
+                writeToFile(file_URL, __func__, log_message);
+                cJSON_Delete(json);
+                return FAILED;
+            }
+            snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "ID %d does not exist in the database. Skipping deletion.", id_to_delete);
+            writeToFile(file_URL, __func__, log_message);
+            printf("%s\n",log_message);
+        }
+    }
     // Clean up the JSON data structure
     cJSON_Delete(json);
     return SUCCESS;
