@@ -38,12 +38,11 @@ int getNextAvailableID()
  */
 void DB_open()
 {
-    const char *db_name = "employee_attendance.db";
     char *err_msg = NULL;
     int result;
 
     // Open a connection to the "attendance" database
-    result = sqlite3_open(db_name, &db_attendance);
+    result = sqlite3_open(g_database_path, &db_attendance);
     if (result != SQLITE_OK)
     {
         syslog_log(LOG_ERR, __func__, "format", "Failed to open attendance database: %s (SQLite error code: %d)", sqlite3_errmsg(db_attendance), result);
@@ -201,7 +200,7 @@ int DB_find()
     }
     char *query = "SELECT ID, Timestamp, Direction, FPM FROM attendance WHERE Saved = 'X';";
     sqlite3_stmt *stmt;
-    int check = 0;
+    int check = 0,rowCount = 0;
 
     // Prepare the request
     if (sqlite3_prepare_v2(db_attendance, query, -1, &stmt, NULL) != SQLITE_OK)
@@ -210,10 +209,11 @@ int DB_find()
         pthread_mutex_unlock(&sqlMutex);
         return ERROR;
     }
-
     // Processing query results
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
+        rowCount++;
+        printf("rowCount= %d\n",rowCount);
         int id = sqlite3_column_int(stmt, 0);
         int timestamp = sqlite3_column_int(stmt, 1);
         const char *direction = (const char *)sqlite3_column_text(stmt, 2);
@@ -246,10 +246,15 @@ int DB_find()
  */
 void DB_update(int id)
 {
-    char updateQuery[256];
-    snprintf(updateQuery, sizeof(updateQuery), "UPDATE attendance SET Saved = 'V' WHERE ID = %d;", id);
+    char *updateQuery = NULL;
+    int rc = asprintf(&updateQuery, "UPDATE attendance SET Saved = 'V' WHERE ID = %d;", id);
+    if (rc == -1 || updateQuery == NULL)
+    {
+        syslog_log(LOG_ERR, __func__, "format", "Memory allocation error during query creation.");
+        return;
+    }    
     char *err_msg = 0;
-    int rc = sqlite3_exec(db_attendance, updateQuery, 0, 0, &err_msg);
+    rc = sqlite3_exec(db_attendance, updateQuery, 0, 0, &err_msg);
 
     if (rc != SQLITE_OK)
     {
@@ -257,6 +262,7 @@ void DB_update(int id)
         // fprintf(stderr, "Failed to update data in the database: %s\n", err_msg);
         sqlite3_free(err_msg);
     }
+    free(updateQuery);
 }
 /**
  * @brief Deletes an employee record from the database.
@@ -274,6 +280,7 @@ Status_t DB_delete(int ID)
         syslog_log(LOG_ERR, __func__, "format", "Failed to lock mutex");
         return FAILED;
     }
+
     char *sql_query = NULL;
     // Create SQL query for deletion
     int ret = asprintf(&sql_query, "DELETE FROM employees WHERE ID = %d;", ID);
@@ -289,39 +296,43 @@ Status_t DB_delete(int ID)
     if (sqlite3_prepare_v2(db_attendance, sql_query, -1, &stmt, NULL) != SQLITE_OK)
     {
         syslog_log(LOG_ERR, __func__, "format", "Failed to prepare request: %s", sqlite3_errmsg(db_attendance));
-        sqlite3_free(sql_query); // Free allocated memory
+        free(sql_query); // Free allocated memory
         pthread_mutex_unlock(&sqlMutex);
         return FAILED; // Return error code
     }
+
+    free(sql_query); // Free allocated memory as it is no longer needed
 
     // Execute the prepared statement
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {
         syslog_log(LOG_ERR, __func__, "format", "Failed to delete record: %s", sqlite3_errmsg(db_attendance));
         sqlite3_finalize(stmt);
-        sqlite3_free(sql_query);
         pthread_mutex_unlock(&sqlMutex);
         return FAILED;
     }
+
     // Check if any rows were affected
     if (sqlite3_changes(db_attendance) == 0)
     {
         syslog_log(LOG_ERR, __func__, "format", "No record found with ID %d", ID);
         sqlite3_finalize(stmt);
-        sqlite3_free(sql_query);
         pthread_mutex_unlock(&sqlMutex);
         return FAILED;
     }
+
     // Log successful deletion
     char log_message[MAX_LOG_MESSAGE_LENGTH];
     snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "ID %d deleted from DB", ID);
     syslog_log(LOG_ERR, __func__, "stderr", log_message);
+
     // Clean up resources
     sqlite3_finalize(stmt);
-    sqlite3_free(sql_query);
     pthread_mutex_unlock(&sqlMutex);
+
     return SUCCESS;
 }
+
 /**
  * @brief Deletes old attendance records from the database.
  *
@@ -334,7 +345,7 @@ void DB_delete_old_records(time_t lastDay)
 {
     // Convert time_t to struct tm
     struct tm *timeinfo = localtime(&lastDay);
-    timeinfo->tm_mon -= g_month; // Subtract two months
+    timeinfo->tm_mon -= g_month; 
     mktime(timeinfo);
 
     time_t timestamp_threshold = mktime(timeinfo);
@@ -359,22 +370,24 @@ void DB_delete_old_records(time_t lastDay)
     if (sqlite3_prepare_v2(db_attendance, sql_query, -1, &stmt, NULL) != SQLITE_OK)
     {
         syslog_log(LOG_ERR, __func__,__func__, "format", "Failed to prepare request: %s", sqlite3_errmsg(db_attendance));
-        sqlite3_free(sql_query);
+        free(sql_query);
         pthread_mutex_unlock(&sqlMutex);
         return;
     }
+
+    // Free the allocated memory for SQL query since it is no longer needed
+    free(sql_query);
+
     // Execute the prepared statement
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {
         syslog_log(LOG_ERR, __func__,__func__, "format", "Failed to delete records: %s", sqlite3_errmsg(db_attendance));
         sqlite3_finalize(stmt);
-        sqlite3_free(sql_query);
         pthread_mutex_unlock(&sqlMutex);
         return;
     }
     // Clean up resources
     sqlite3_finalize(stmt);
-    sqlite3_free(sql_query);
     pthread_mutex_unlock(&sqlMutex);
 }
 
@@ -488,4 +501,42 @@ int DB_restore(int id)
     pthread_mutex_unlock(&sqlMutex);
     
     return SUCCESS;
+}
+int DB_find_ID(int id_to_check)
+{
+    // Obtain the mutex before accessing the database
+    if (pthread_mutex_lock(&sqlMutex) == MUTEX_ERROR)
+    {
+        syslog_log(LOG_ERR, __func__, "format", "Failed to lock mutex");
+        return ERROR;
+    }
+
+    sqlite3_stmt *stmt;
+    int result = 0;
+
+    char *sql_query = NULL;
+    asprintf(&sql_query, "SELECT ID FROM attendance WHERE Saved = 'X' AND ID = %d;", id_to_check);
+
+    // Prepare the request
+    if (sqlite3_prepare_v2(db_attendance, sql_query, -1, &stmt, NULL) != SQLITE_OK)
+    {
+        syslog_log(LOG_ERR, __func__, "format", "Failed to prepare request: %s", sqlite3_errmsg(db_attendance));
+        pthread_mutex_unlock(&sqlMutex);
+        return ERROR;
+    }
+
+    // Check if there are any rows returned
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        // If a row exists, it means there are unsent data for the given ID
+        result = SUCCESS;
+    }
+    // Finalize the statement
+    if (stmt != NULL)
+    {
+        sqlite3_finalize(stmt);
+    }
+
+    pthread_mutex_unlock(&sqlMutex);
+    return result;
 }

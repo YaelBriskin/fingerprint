@@ -23,5 +23,5 @@ void DB_delete_old_records(time_t lastDay);
 int getNextAvailableID();
 int DB_check_id_exists(int id);
 int DB_restore(int id);
-
+int DB_find_ID(int id_to_check);
 #endif  // DATABASE_H

@@ -1,1 +1,110 @@
 {"acknowledged":true,"modifiedCount":1,"upsertedId":null,"upsertedCount":0,"matchedCount":1}Error in process_response: ID 6 does not exist in the database.ID 6 was removed from the server only.
+{"acknowledged":true,"modifiedCount":1,"upsertedId":null,"upsertedCount":0,"matchedCount":1}Error in process_response: ID 4 does not exist in the database.ID 4 was removed from the server only.
+Error in process_response: No IDs to delete in the response
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in process_response: No IDs to delete in the response
+Error in process_response: No IDs to delete in the response
+Error in process_response: No IDs to delete in the response
+Error in process_response: No IDs to delete in the response
+
+Error in process_response: No IDs to delete in the response
+Error in process_response: No IDs to delete in the response{"message":"New employee with id 8 configured on \"Nahalat Yitzhak\" at Mon Aug 26 2024 17:51:55 GMT+0300 (Israel Daylight Time)"}{"acknowledged":true,"modifiedCount":1,"upsertedId":null,"upsertedCount":0,"matchedCount":1}
+Error in process_response: ID 9 does not exist in the database.ID 9 was removed from the server only.
+Error in send_post_request: curl_easy_perform() failed . ERROR: Couldn't connect to server 
+Error in process_response: No IDs to delete in the response{"status":404,"message":"No user with the following data was found: fingerprint_id 9, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404{"status":404,"message":"No user with the following data was found: fingerprint_id 9, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404
+Error in process_response: No IDs to delete in the response{"status":404,"message":"No user with the following data was found: fingerprint_id 9, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404{"status":404,"message":"No user with the following data was found: fingerprint_id 9, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404{"status":404,"message":"No user with the following data was found: fingerprint_id 9, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404
+Error in process_response: No IDs to delete in the response
+Error in send_post_request: curl_easy_perform() failed . ERROR: Couldn't connect to server {"status":404,"message":"No user with the following data was found: fingerprint_id 9, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404{"status":404,"message":"No user with the following data was found: fingerprint_id 9, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404{"status":404,"message":"No user with the following data was found: fingerprint_id 9, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404
+Error in process_response: No IDs to delete in the response{"status":404,"message":"No user with the following data was found: fingerprint_id 9, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404{"status":404,"message":"No user with the following data was found: fingerprint_id 9, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404{"status":404,"message":"No user with the following data was found: fingerprint_id 9, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404{"status":404,"message":"No user with the following data was found: fingerprint_id 9, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404
+Error in send_get_request: curl_easy_perform() failed. ERROR: Problem with the SSL CA cert (path? access rights?)
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_post_request: curl_easy_perform() failed . ERROR: Problem with the SSL CA cert (path? access rights?) 
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_post_request: curl_easy_perform() failed . ERROR: Couldn't resolve host name 
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't connect to server
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't connect to server
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't connect to server
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't connect to server
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't connect to server
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't connect to server
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't connect to server
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't connect to server
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't connect to server
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in send_get_request: curl_easy_perform() failed. ERROR: Couldn't resolve host name
+Error in post_requestThread: Failed to send request for deletions.
+Error in process_response: No IDs to delete in the response

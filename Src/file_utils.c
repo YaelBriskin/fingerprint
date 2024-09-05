@@ -36,13 +36,13 @@ void writeToFile(FILE *file, const char *func_name, const char *message)
     // Lock the mutex to ensure exclusive access to the file
     if (pthread_mutex_lock(&fileMutex) != 0)
     {
-        syslog(LOG_ERR, "Error in %s: Failed to lock mutex: %s", func_name, strerror(errno));
+        syslog(LOG_ERR, "%s: Failed to lock mutex: %s", func_name, strerror(errno));
         return;
     }
     // Check if the file is open
     if (file != NULL) 
     {
-        fprintf(file, "Error in %s: %s\n", func_name, message);
+        fprintf(file, "\nError in %s: %s", func_name, message);
     } else 
     {
         syslog_log(LOG_ERR, __func__, "strerror", "File not open", strerror(errno));

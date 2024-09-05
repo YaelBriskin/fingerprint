@@ -20,7 +20,7 @@
 #define SLEEP_DURATION 4
 #define ONE_MINUTE 60 
 #define MONTH 2
-#define CHECK_INTERVAL 60//(24 * 60 * 60) // 24 hours in seconds
+#define CHECK_INTERVAL 20//(24 * 60 * 60) // 24 hours in seconds
 #define MAX_FILE_SIZE 10485760 // 10 MB
 
 #define TRUE "true"
@@ -39,12 +39,15 @@
 #define MAX_HEADER_LENGTH 50
 #define MAX_FILENAME_LENGTH 256
 #define MAX_LCD_MESSAGE_LENGTH 20
+#define MAX_PATH_LENGTH 4096
 
 #define MAX_LENGTH_ID 3
 #define MAX_FINGERPRINT 100
 
-#define CONFIG_NAME "config.conf"
+#define CONFIG_NAME "/home/debian/fingerprint/config.conf"
+#define DATABASE_NAME "/home/debian/fingerprint/employee_attendance.db"
 #define FILE_NAME "URL.txt"
+
 typedef enum {
     FAILED = 0,
     SUCCESS = 1

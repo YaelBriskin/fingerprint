@@ -424,6 +424,7 @@ int main()
   g_max_retries = config.max_retries;
   g_db_sleep = config.db_sleep;
   strncpy(g_lcd_message, config.lcd_message, MAX_LCD_MESSAGE_LENGTH);
+  strncpy(g_database_path, config.database_path, MAX_PATH_LENGTH);
 
   // Initialize all peripherals and check for initialization failure
   int retries = 0;

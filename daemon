@@ -29,6 +29,7 @@ systemctl status fingerprint
 ---------------
 systemctl stop fingerprint
 
+sudo systemctl daemon-reload
 
 sudo reboot
 

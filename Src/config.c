@@ -11,6 +11,7 @@ char g_header[MAX_HEADER_LENGTH];
 int g_max_retries;
 int g_db_sleep;
 char g_lcd_message[MAX_LCD_MESSAGE_LENGTH];
+char g_database_path[MAX_PATH_LENGTH];
 
 /**
  * @brief Reads configuration data from a file and populates the provided config structure.
@@ -91,6 +92,12 @@ Status_t read_config(Config_t *config)
     if (fscanf(file, "LCD_MESSAGE \"%[^\"]\"\n", config->lcd_message) != SUCCESS) 
     {
         syslog_log(LOG_ERR, __func__, "stderr", "Error reading LCD_MESSAGE from config file");
+        fclose(file);
+        return FAILED;
+    }
+    if (fscanf(file, "DATABASE_PATH %s\n", config->database_path) != SUCCESS) 
+    {
+        syslog_log(LOG_ERR, __func__, "stderr", "Error reading DATABASE_PATH from config file");
         fclose(file);
         return FAILED;
     }
