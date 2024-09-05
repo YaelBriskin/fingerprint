@@ -200,7 +200,7 @@ int DB_find()
     }
     char *query = "SELECT ID, Timestamp, Direction, FPM FROM attendance WHERE Saved = 'X';";
     sqlite3_stmt *stmt;
-    int check = 0,rowCount = 0;
+    int check = 0;
 
     // Prepare the request
     if (sqlite3_prepare_v2(db_attendance, query, -1, &stmt, NULL) != SQLITE_OK)
@@ -212,8 +212,6 @@ int DB_find()
     // Processing query results
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        rowCount++;
-        printf("rowCount= %d\n",rowCount);
         int id = sqlite3_column_int(stmt, 0);
         int timestamp = sqlite3_column_int(stmt, 1);
         const char *direction = (const char *)sqlite3_column_text(stmt, 2);

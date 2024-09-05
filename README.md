@@ -14,6 +14,12 @@ This project represents a fingerprint-based access control system. It uses finge
 
 ## Project Structure
 
+### Directory Organization:
+
+- `./Inc/`: Header files containing function declarations.
+- `./Src/`: Source code files implementing the system functionality.
+- `config.conf`: Configuration file for system parameters.
+
 ### Header Files (`./Inc/`)
 
 - `GPIO.h`: Functions for GPIO operations.
@@ -63,6 +69,7 @@ The system configuration is managed using the `config.conf` file. This file allo
 
 ### Buttons and Their Functions
 
+The system reacts to button presses as follows:
 - **IN Button**: Records entry into the system.
 - **OUT Button**: Records exit from the system.
 - **NEW Button**: Registers a new employee.
@@ -77,6 +84,32 @@ When pressing the buttons, the system will:
 2. **Process the Result and Update the Database**:
    - For recognized fingerprints, the system updates the database with the action (entry or exit).
    - If registering a new employee, it adds their details to the database.
+
+### How to Work with the SQLite Database
+
+1. Start the SQLite CLI:
+
+   ```sql
+   sqlite3 employee_attendance.db
+   ```
+
+2. View the Tables:
+
+   ```sql
+   .tables
+   ```
+
+3. Query the Data:
+
+   ```sql
+   SELECT * FROM attendance;
+   ```
+
+4. Exit the SQLite CLI:
+
+   ```sql
+   .exit
+   ```
 
 3. **Display the Appropriate Message on the LCD**:
    - Success or failure messages and other relevant information are displayed on the LCD.
@@ -95,9 +128,15 @@ For debugging and monitoring the system status:
 - **Syslog**: All errors and important events are logged using syslog. These logs are available in the system journal and can be used for debugging and monitoring.
 - **Error Indications**: Visual feedback (e.g., red LED) is provided to indicate connection errors or other issues to assist in troubleshooting.
    
-   to view log entries    journalctl _COMM=fingerprint
-   to clear the log       sudo journalctl --rotate
-                          sudo journalctl --vacuum-time=1s
+   to view log entries   
+   ```bash
+    journalctl _COMM=fingerprint
+   ``` 
+   to clear the log 
+   ```bash      
+   sudo journalctl --rotate
+   sudo journalctl --vacuum-time=1s
+   ```
 
 ## Contact
 If you have any questions, feel free to reach out via email: yaelbriskin@gmail.com
