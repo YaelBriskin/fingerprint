@@ -4,6 +4,37 @@
 
 This project represents a fingerprint-based access control system. It uses fingerprint sensors, GPIO for managing buttons and LEDs, and interacts with a database and external services via cURL.
 
+## Adding Peripherals via Overlay on BeagleBone
+
+1.**Navigate to the firmware directory**:
+```bash
+cd /lib/firmware/
+```
+2.**List available overlay files for UART and I2C**:
+```bash
+ls *UART* *I2C*
+```
+3.**Select the desired overlay files and open the** *uEnv.txt* **file for editing**:
+```bash
+cd /boot/
+sudo nano uEnv.txt
+```
+4.**Add the necessary overlay files to** *uEnv.txt*. **Example**:
+```bash
+# Add required overlay files
+uboot_overlay_addr0=/lib/firmware/BB-UART2-00A0.dtbo
+uboot_overlay_addr1=/lib/firmware/BB-I2C2-00A0.dtbo
+uboot_overlay_addr2=/lib/firmware/BB-UART4-00A0.dtbo
+```
+5.**Save the changes and close the editor.**
+
+6.**Verify the connected peripherals**:
+```bash
+cat /sys/kernel/debug/pinctrl/44e10800.pinmux-pinctrl-single/pingroups
+```
+
+
+
 ## Requirements
 
 Before starting, ensure that you have the following libraries installed:
