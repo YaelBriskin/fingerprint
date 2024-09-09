@@ -4,6 +4,45 @@
 
 This project represents a fingerprint-based access control system. It uses fingerprint sensors, GPIO for managing buttons and LEDs, and interacts with a database and external services via cURL.
 
+## Requirements
+
+Before starting, ensure that you have the following libraries installed:
+
+- `libgpiod-dev`
+- `sqlite3`
+- `libcurl`
+- `cjson`
+To install dependencies on Debian/Ubuntu:
+
+```bash
+sudo apt-get install -y libgpiod-dev sqlite3 libcurl4-openssl-dev libcjson-dev
+```
+## Project Compilation
+The project uses a Makefile for compilation. It supports two build modes:
+
+- **Debug**: Includes debugging information and logs output using printf.
+- **Release**: Logs messages using syslog with LOG_ERR level.
+
+**Compiling in Debug Mode**
+```bash
+make debug
+```
+**Compiling in Release Mode**
+```bash
+make release
+```
+
+**Cleaning the Build**
+To clean up all built files:
+```bash
+make clean
+```
+**Running the Project**
+After compilation, the executable will be located in *./build/out/.* You can run it with:
+```bash
+./build/out/fingerprint
+```
+
 ## Features
 
 - **Fingerprint scanning** for entry and exit.

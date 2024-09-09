@@ -1,6 +1,14 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
+#ifdef DEBUG
+    #define LOG_MESSAGE(log_level, func_name, message_type, custom_message, sys_message) \
+        printf("Debug [%s] in %s: %s\n", log_level, func_name, custom_message)
+#else
+    #define LOG_MESSAGE(log_level, func_name, message_type, custom_message, sys_message) \
+        syslog_log(log_level, func_name, message_type, custom_message, sys_message)
+#endif
+
 #define CANCEL 0
 #define ERROR -1
 #define MUTEX_OK 0

@@ -17,13 +17,13 @@ int deleteModel(uint16_t id_N)
 	switch (ack)
 	{
 	case FINGERPRINT_OK:
-		syslog_log(LOG_ERR, __func__, "OK", "Delete success");
+		LOG_MESSAGE(LOG_ERR, __func__, "OK", "Delete success",NULL);
 		return SUCCESS;
 	case FINGERPRINT_PACKETRECIEVER:
-		syslog_log(LOG_ERR, __func__, "stderr", "Error when receiving package");
+		LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error when receiving package",NULL);
 		return FAILED;
 	case FINGERPRINT_DELETEFAIL:
-		syslog_log(LOG_ERR, __func__, "stderr", "Faile to delete templates");
+		LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Faile to delete templates",NULL);
 		return FAILED;
 	default:
 		return FAILED;

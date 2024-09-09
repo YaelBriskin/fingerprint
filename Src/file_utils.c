@@ -18,7 +18,7 @@ void initFile(FILE **file, const char *file_name)
     *file = fopen(file_name, "a"); // "a" means "append" - add to the end of the file
     if (file == NULL) 
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "Error opening file", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error opening file", strerror(errno));
     }
 }
 
@@ -45,7 +45,7 @@ void writeToFile(FILE *file, const char *func_name, const char *message)
         fprintf(file, "\nError in %s: %s", func_name, message);
     } else 
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "File not open", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "File not open", strerror(errno));
 
     }
     // Unlock the mutex to allow other threads to access the file

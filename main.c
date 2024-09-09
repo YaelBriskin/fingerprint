@@ -102,7 +102,7 @@ Status_t init()
   // Initialize GPIOs
   if (GPIO_init(GPIO_BUTTON_IN, "in") != SUCCESS)
   {
-    syslog_log(LOG_ERR, __func__, "strerror", "GPIO BUTTON IN initialization failed", strerror(errno));
+    LOG_MESSAGE(LOG_ERR, __func__, "strerror", "GPIO BUTTON IN initialization failed", strerror(errno));
     cleanup_resources();
     return FAILED;
   }
@@ -110,7 +110,7 @@ Status_t init()
 
   if (GPIO_init(GPIO_BUTTON_OUT, "in") != SUCCESS)
   {
-    syslog_log(LOG_ERR, __func__, "strerror", "GPIO BUTTON OUT initialization failed", strerror(errno));
+    LOG_MESSAGE(LOG_ERR, __func__, "strerror", "GPIO BUTTON OUT initialization failed", strerror(errno));
     cleanup_resources();
     return FAILED;
   }
@@ -118,7 +118,7 @@ Status_t init()
 
   if (GPIO_init(GPIO_BUTTON_NEW, "in") != SUCCESS)
   {
-    syslog_log(LOG_ERR, __func__, "strerror", "GPIO BUTTON NEW initialization failed", strerror(errno));
+    LOG_MESSAGE(LOG_ERR, __func__, "strerror", "GPIO BUTTON NEW initialization failed", strerror(errno));
     cleanup_resources();
     return FAILED;
   }
@@ -126,7 +126,7 @@ Status_t init()
 
   if (GPIO_init(GPIO_BUZZER, "out") != SUCCESS)
   {
-    syslog_log(LOG_ERR, __func__, "strerror", "GPIO BUZZER initialization failed", strerror(errno));
+    LOG_MESSAGE(LOG_ERR, __func__, "strerror", "GPIO BUZZER initialization failed", strerror(errno));
     cleanup_resources();
     return FAILED;
   }
@@ -134,7 +134,7 @@ Status_t init()
 
   if (GPIO_init(GPIO_LED_RED, "out") != SUCCESS)
   {
-    syslog_log(LOG_ERR, __func__, "strerror", "GPIO LED RED initialization failed", strerror(errno));
+    LOG_MESSAGE(LOG_ERR, __func__, "strerror", "GPIO LED RED initialization failed", strerror(errno));
     cleanup_resources();
     return FAILED;
   }
@@ -143,7 +143,7 @@ Status_t init()
   // Initialize LCD
   if (!lcd20x4_i2c_init())
   {
-    syslog_log(LOG_ERR, __func__, "strerr", "LCD initialization failed!", NULL);
+    LOG_MESSAGE(LOG_ERR, __func__, "strerr", "LCD initialization failed!", NULL);
     cleanup_resources();
     return FAILED;
   }
@@ -153,7 +153,7 @@ Status_t init()
   uart2_fd = UART_Init(UART2_DEVICE, UART2_BaudRate);
   if (uart2_fd < 1)
   {
-    syslog_log(LOG_ERR, __func__, "strerror", "UART2 initialization failed", strerror(errno));
+    LOG_MESSAGE(LOG_ERR, __func__, "strerror", "UART2 initialization failed", strerror(errno));
     cleanup_resources();
     return FAILED;
   }
@@ -162,7 +162,7 @@ Status_t init()
   uart4_fd = UART_Init(UART4_DEVICE, UART4_BaudRate);
   if (uart4_fd < 1)
   {
-    syslog_log(LOG_ERR, __func__, "strerror", "UART4 initialization failed", strerror(errno));
+    LOG_MESSAGE(LOG_ERR, __func__, "strerror", "UART4 initialization failed", strerror(errno));
     cleanup_resources();
     return FAILED;
   }
@@ -188,7 +188,7 @@ void fingerPrint()
   int button_fd_new = GPIO_open(GPIO_BUTTON_NEW, O_RDONLY);
   if (button_fd_in == ERROR || button_fd_out == ERROR || button_fd_new == ERROR)
   {
-    syslog_log(LOG_ERR, __func__, "strerror", "Error opening GPIO value file", strerror(errno));
+    LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error opening GPIO value file", strerror(errno));
     return;
   }
   // Check if the IN button is pressed
@@ -197,7 +197,7 @@ void fingerPrint()
     // Lock mutex to access shared resources safely
     if (pthread_mutex_lock(&displayMutex) != MUTEX_OK)
     {
-      syslog_log(LOG_ERR, __func__, "strerror", "Error locking mutex", strerror(errno));
+      LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error locking mutex", strerror(errno));
       return;
     }
     displayLocked = LOCK;
@@ -253,12 +253,12 @@ void fingerPrint()
     // Send a signal to finish working with the display
     if (pthread_cond_signal(&displayCond) != SIGNAL_OK)
     {
-      syslog_log(LOG_ERR, __func__, "strerror", "Error signaling condition variable", strerror(errno));
+      LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error signaling condition variable", strerror(errno));
     }
     lcd20x4_i2c_clear();
     if (pthread_mutex_unlock(&displayMutex) != MUTEX_OK)
     {
-      syslog_log(LOG_ERR, __func__, "strerror", "Error unlocking mutex", strerror(errno));
+      LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error unlocking mutex", strerror(errno));
       return;
     }
   }
@@ -267,7 +267,7 @@ void fingerPrint()
   {
     if (pthread_mutex_lock(&displayMutex) != MUTEX_OK)
     {
-      syslog_log(LOG_ERR, __func__, "strerror", "Error locking mutex", strerror(errno));
+      LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error locking mutex", strerror(errno));
       return;
     }
     displayLocked = LOCK;
@@ -320,12 +320,12 @@ void fingerPrint()
     // Send a signal to finish working with the display
     if (pthread_cond_signal(&displayCond) != SIGNAL_OK)
     {
-      syslog_log(LOG_ERR, __func__, "strerror", "Error signaling condition variable", strerror(errno));
+      LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error signaling condition variable", strerror(errno));
     }
     lcd20x4_i2c_clear();
     if (pthread_mutex_unlock(&displayMutex) != MUTEX_OK)
     {
-      syslog_log(LOG_ERR, __func__, "strerror", "Error unlocking mutex", strerror(errno));
+      LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error unlocking mutex", strerror(errno));
       return;
     }
   }
@@ -335,7 +335,7 @@ void fingerPrint()
     int id = getNextAvailableID(); // get next ID value
     if (pthread_mutex_lock(&displayMutex) != MUTEX_OK)
     {
-      syslog_log(LOG_ERR, __func__, "strerror", "Error locking mutex", strerror(errno));
+      LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error locking mutex", strerror(errno));
       return;
     }
     displayLocked = LOCK;
@@ -354,12 +354,14 @@ void fingerPrint()
       while (retries < g_max_retries && send_json_new_employee(id, timestamp) != SUCCESS)
       {
         retries++;
-        syslog_log(LOG_ERR, __func__, "strerror", "Failed to send new employee data, retrying... %d", strerror(errno), retries);
+        char log_message[MAX_LOG_MESSAGE_LENGTH];
+        snprintf(log_message, MAX_LOG_MESSAGE_LENGTH,"Failed to send new employee data, retrying... %d", strerror(errno), retries);
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr",log_message, NULL);
         sleep(1); // Add some delay between retries if necessary
       }
       if (retries == g_max_retries)
       {
-        syslog_log(LOG_ERR, __func__, "strerror", "Failed to send new employee data after retries", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Failed to send new employee data after retries", strerror(errno));
         deleteModel(id);
         DB_delete(id);
         lcd20x4_i2c_puts(0, 0, " Connection error. The new employee ID were not saved"); // show on LCD
@@ -369,7 +371,7 @@ void fingerPrint()
     else
     {
       // If enrolling fails, remove the entry from the database
-      syslog_log(LOG_ERR, __func__, "format", "Enrolling failed.");
+      LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Enrolling failed.",NULL);
       lcd20x4_i2c_puts(1, 0, "Enrolling failed."); // show on LCD
     }
 
@@ -377,12 +379,12 @@ void fingerPrint()
     // Signal condition variable to indicate that display operation is complete
     if (pthread_cond_signal(&displayCond) != SIGNAL_OK)
     {
-      syslog_log(LOG_ERR, __func__, "strerror", "Error signaling condition variable", strerror(errno));
+      LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error signaling condition variable", strerror(errno));
     }
     lcd20x4_i2c_clear(); // Clear the display
     if (pthread_mutex_unlock(&displayMutex) != MUTEX_OK)
     {
-      syslog_log(LOG_ERR, __func__, "strerror", "Error unlocking mutex", strerror(errno));
+      LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error unlocking mutex", strerror(errno));
       return;
     }
   }
@@ -433,19 +435,21 @@ int main()
   {
     retries++;
     // Log the retry attempt
-    syslog_log(LOG_ERR, __func__, "strerror", "Initialization failed, retrying... %d", strerror(errno), retries);
+    char log_message[MAX_LOG_MESSAGE_LENGTH];
+    snprintf(log_message, MAX_LOG_MESSAGE_LENGTH,"Initialization failed, retrying... %d", strerror(errno), retries);
+    LOG_MESSAGE(LOG_ERR, __func__, "stderr", log_message, NULL);
     sleep(1); // Add some delay between retries if necessary
   }
   if (retries == g_max_retries)
   {
-    syslog_log(LOG_ERR, __func__, "strerror", "Failed to initialize resources after retries", strerror(errno));
+    LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Failed to initialize resources after retries", strerror(errno));
     syslog_close();
     return EXIT_FAILURE;
   }
   // Initialize the cURL library globally
   if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK)
   {
-    syslog_log(LOG_ERR, __func__, "strerror", "Could not initialize cURL", strerror(errno));
+    LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Could not initialize cURL", strerror(errno));
     return EXIT_FAILURE;
   }
   // emptyDatabase(); //do this to empty database in FPM
@@ -464,19 +468,19 @@ int main()
   // Create a threads
   if (pthread_create(&thread_datetime, NULL, clockThread, NULL) != THREAD_OK)
   {
-    syslog_log(LOG_ERR, __func__, "strerror", "Error creating displayThread thread", strerror(errno));
+    LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error creating displayThread thread", strerror(errno));
     curl_global_cleanup();
     return THREAD_ERROR;
   }
   if (pthread_create(&thread_database, NULL, databaseThread, NULL) != THREAD_OK)
   {
-    syslog_log(LOG_ERR, __func__, "strerror", "Error creating databaseThread thread", strerror(errno));
+    LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error creating databaseThread thread", strerror(errno));
     curl_global_cleanup();
     return THREAD_ERROR;
   }
   if (pthread_create(&thread_deletion, NULL, post_requestThread, NULL) != THREAD_OK)
   {
-    syslog_log(LOG_ERR, __func__, "strerror", "Error creating post_requestThread thread", strerror(errno));
+    LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error creating post_requestThread thread", strerror(errno));
     curl_global_cleanup();
     return THREAD_ERROR;
   }

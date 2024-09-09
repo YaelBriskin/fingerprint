@@ -58,7 +58,7 @@ void buzzer()
     int fd_buzzer = GPIO_open(GPIO_BUZZER, O_WRONLY);
     if (fd_buzzer < 0)
     {
-        syslog_log(LOG_ERR, __func__, "stderr", "Failed to open GPIO_BUZZER");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Failed to open GPIO_BUZZER",NULL);
         return;
     }
     GPIO_write(fd_buzzer, BUZZER_ON);
@@ -87,7 +87,7 @@ void *databaseThread(void *arg)
         int fd_led = GPIO_open(GPIO_LED_RED, O_WRONLY);
         if (fd_led < 0)
         {
-            syslog_log(LOG_ERR, __func__, "stderr", "Failed to open GPIO_LED_RED");
+            LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Failed to open GPIO_LED_RED",NULL);
             pthread_exit(NULL);
         }
         // checks whether there is data in the database that has not yet been sent and

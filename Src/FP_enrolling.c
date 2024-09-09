@@ -33,7 +33,7 @@ int enrolling(uint16_t pageId)
         if (elapsed_time >= max_execution_time)
         {
             lcd20x4_i2c_puts(1, 0, "Timeout: One minute has passed.");
-            syslog_log(LOG_ERR, __func__, "stderr", "Timeout: One minute has passed");
+            LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Timeout: One minute has passed", NULL);
             sleep(2);
             lcd20x4_i2c_clear();
             return FINGERPRINT_TIMEOUT;
@@ -47,19 +47,19 @@ int enrolling(uint16_t pageId)
             switch (ack)
             {
             case FINGERPRINT_OK:
-                syslog_log(LOG_INFO, __func__, "OK", "Finger collection success");
+                LOG_MESSAGE(LOG_INFO, __func__, "OK", "Finger collection success", NULL);
                 lcd20x4_i2c_puts(1, 0, "Finger collection success");
                 break;
             case FINGERPRINT_PACKETRECIEVER:
-                syslog_log(LOG_ERR, __func__, "stderr", "Error when receiving package");
+                LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error when receiving package", NULL);
                 lcd20x4_i2c_puts(1, 0, "Error when receiving package");
                 break;
             case FINGERPRINT_NOFINGER:
-                syslog_log(LOG_ERR, __func__, "stderr", "Can't detect finger");
+                LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Can't detect finger", NULL);
                 lcd20x4_i2c_puts(1, 0, "Can't detect finger");
                 break;
             case FINGERPRINT_IMAGEFAIL:
-                syslog_log(LOG_ERR, __func__, "stderr", "Fail to collect finger");
+                LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Fail to collect finger", NULL);
                 lcd20x4_i2c_puts(1, 0, "Fail to collect finger");
                 break;
             default:;
@@ -78,19 +78,19 @@ int enrolling(uint16_t pageId)
         switch (ack)
         {
         case FINGERPRINT_OK:
-            syslog_log(LOG_INFO, __func__, "OK", "Generate character file complete");
+            LOG_MESSAGE(LOG_INFO, __func__, "OK", "Generate character file complete", NULL);
             break;
         case FINGERPRINT_PACKETRECIEVER:
-            syslog_log(LOG_ERR, __func__, "stderr", "Error when receiving package");
+            LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error when receiving package", NULL);
             break;
         case FINGERPRINT_IMAGEMESS:
-            syslog_log(LOG_ERR, __func__, "stderr", "Fail to generate character file due to the over-disorderly fingerprint image");
+            LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Fail to generate character file due to the over-disorderly fingerprint image", NULL);
             break;
         case FINGERPRINT_FEATUREFAIL:
-            syslog_log(LOG_ERR, __func__, "stderr", "Fail to generate character file due to lackness of character point or over-smallness of fingerprint image");
+            LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Fail to generate character file due to lackness of character point or over-smallness of fingerprint image", NULL);
             break;
         case FINGERPRINT_INVALIDIMAGE:
-            syslog_log(LOG_ERR, __func__, "stderr", "Fail to generate the image for the lackness of valid primary image");
+            LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Fail to generate the image for the lackness of valid primary image", NULL);
             break;
         }
     }
@@ -98,7 +98,7 @@ int enrolling(uint16_t pageId)
     if (fingerFastSearch() == FINGERPRINT_OK)
     {
         lcd20x4_i2c_puts(1, 0, "Fingerprint already exists");
-        syslog_log(LOG_ERR, __func__, "stderr", "Attempt to re-register the fingerprint");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Attempt to re-register the fingerprint", NULL);
         sleep(SLEEP_LCD);
         lcd20x4_i2c_clear();
         return ERROR;
@@ -123,7 +123,7 @@ int enrolling(uint16_t pageId)
         if (elapsed_time >= max_execution_time)
         {
             lcd20x4_i2c_puts(1, 0, "Timeout: One minute has passed.");
-            syslog_log(LOG_ERR, __func__, "stderr", "Timeout: One minute has passed");
+            LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Timeout: One minute has passed", NULL);
             sleep(SLEEP_LCD);
             lcd20x4_i2c_clear();
             return FINGERPRINT_TIMEOUT;
@@ -138,19 +138,19 @@ int enrolling(uint16_t pageId)
             switch (ack)
             {
             case FINGERPRINT_OK:
-                syslog_log(LOG_ERR, __func__, "OK", "Finger collection success");
+                LOG_MESSAGE(LOG_ERR, __func__, "OK", "Finger collection success", NULL);
                 lcd20x4_i2c_puts(1, 0, "Finger collection success");
                 break;
             case FINGERPRINT_PACKETRECIEVER:
-                syslog_log(LOG_ERR, __func__, "stderr", "Error when receiving package");
+                LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error when receiving package", NULL);
                 lcd20x4_i2c_puts(1, 0, "Error when receiving package");
                 break;
             case FINGERPRINT_NOFINGER:
-                syslog_log(LOG_ERR, __func__, "stderr", "Can't detect finger");
+                LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Can't detect finger", NULL);
                 lcd20x4_i2c_puts(1, 0, "Can't detect finger");
                 break;
             case FINGERPRINT_IMAGEFAIL:
-                syslog_log(LOG_ERR, __func__, "stderr", "Fail to collect finger ");
+                LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Fail to collect finger ", NULL);
                 lcd20x4_i2c_puts(1, 0, "Fail to collect finger ");
                 break;
             default:;
@@ -166,19 +166,19 @@ int enrolling(uint16_t pageId)
     switch (ack)
     {
     case FINGERPRINT_OK:
-        syslog_log(LOG_ERR, __func__, "OK", "Generate character file complete");
+        LOG_MESSAGE(LOG_ERR, __func__, "OK", "Generate character file complete", NULL);
         break;
     case FINGERPRINT_PACKETRECIEVER:
-        syslog_log(LOG_ERR, __func__, "stderr", "Error when receiving package");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error when receiving package", NULL);
         break;
     case FINGERPRINT_IMAGEMESS:
-        syslog_log(LOG_ERR, __func__, "stderr", "Fail to generate character file due to the over-disorderly fingerprint image");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Fail to generate character file due to the over-disorderly fingerprint image", NULL);
         break;
     case FINGERPRINT_FEATUREFAIL:
-        syslog_log(LOG_ERR, __func__, "stderr", "Fail to generate character file due to lackness of character point or over-smallness of fingerprint image");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Fail to generate character file due to lackness of character point or over-smallness of fingerprint image", NULL);
         break;
     case FINGERPRINT_INVALIDIMAGE:
-        syslog_log(LOG_ERR, __func__, "stderr", "Fail to generate the image for the lackness of valid primary image");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Fail to generate the image for the lackness of valid primary image", NULL);
         break;
     default:;
     }
@@ -187,23 +187,23 @@ int enrolling(uint16_t pageId)
     switch (ack)
     {
     case FINGERPRINT_OK:
-        syslog_log(LOG_ERR, __func__, "OK", "Operation success");
+        LOG_MESSAGE(LOG_ERR, __func__, "OK", "Operation success", NULL);
         break;
     case FINGERPRINT_PACKETRECIEVER:
-        syslog_log(LOG_ERR, __func__, "stderr", "Error when receiving package");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error when receiving package", NULL);
         return FAILED;
     case FINGERPRINT_ENROLLMISMATCH:
         ack = createModel();
         switch (ack)
         {
         case FINGERPRINT_OK:
-            syslog_log(LOG_ERR, __func__, "OK", "Operation success");
+            LOG_MESSAGE(LOG_ERR, __func__, "OK", "Operation success", NULL);
             break;
         case FINGERPRINT_PACKETRECIEVER:
-            syslog_log(LOG_ERR, __func__, "stderr", "Error when receiving package");
+            LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error when receiving package", NULL);
             return FAILED;
         case FINGERPRINT_ENROLLMISMATCH:
-            syslog_log(LOG_ERR, __func__, "stderr", "Fail to combine the character files. That’s, the character files don’t belong to one finger");
+            LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Fail to combine the character files. That’s, the character files don’t belong to one finger", NULL);
             return FAILED;
         default:;
         }
@@ -213,16 +213,16 @@ int enrolling(uint16_t pageId)
     switch (ack)
     {
     case FINGERPRINT_OK:
-        syslog_log(LOG_ERR, __func__, "OK", "Storage success");
+        LOG_MESSAGE(LOG_ERR, __func__, "OK", "Storage success", NULL);
         return SUCCESS;
     case FINGERPRINT_PACKETRECIEVER:
-        syslog_log(LOG_ERR, __func__, "stderr", "Error when receiving package");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error when receiving package", NULL);
         return FAILED;
     case FINGERPRINT_BADLOCATION:
-        syslog_log(LOG_ERR, __func__, "stderr", "Addressing PageID is beyond the finger library");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Addressing PageID is beyond the finger library", NULL);
         return FAILED;
     case FINGERPRINT_FLASHERR:
-        syslog_log(LOG_ERR, __func__, "stderr", "Error when writing Flash");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error when writing Flash", NULL);
         return FAILED;
     default:;
     }

@@ -13,14 +13,14 @@ Status_t I2C_Init()
     if (i2c_fd == ERROR)
     {
         // Log the error if the I2C bus could not be opened
-        syslog_log(LOG_ERR, __func__, "strerror", "Error opening I2C", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error opening I2C", strerror(errno));
         return FAILED;
     }
     // Set the I2C address for all subsequent I2C device transfers
     if (ioctl(i2c_fd, I2C_SLAVE_FORCE, I2C_ADDRESS) < 0)
     {
         // Log the error if the I2C address could not be set
-        syslog_log(LOG_ERR, __func__, "strerror", "Error setting I2C address", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error setting I2C address", strerror(errno));
         close(i2c_fd);
         return FAILED;
     }
@@ -40,12 +40,12 @@ void I2C_write(uint8_t *buffer, int size)
         // Attempt to write the data to the I2C bus
         if (write(i2c_fd, buffer, size) == size)
             break;
-        syslog_log(LOG_ERR, __func__, "strerr", "Failed to write to I2C bus", NULL);
+        LOG_MESSAGE(LOG_ERR, __func__, "strerr", "Failed to write to I2C bus", NULL);
         retries_I2C_transmit++;
     } while (retries_I2C_transmit < g_max_retries);
 
     if (retries_I2C_transmit == g_max_retries)
-        syslog_log(LOG_ERR, __func__, "strerr", "Error: Maximum retries reached", NULL);
+        LOG_MESSAGE(LOG_ERR, __func__, "strerr", "Error: Maximum retries reached", NULL);
 }
 
 /**

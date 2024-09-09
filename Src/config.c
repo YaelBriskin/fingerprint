@@ -31,73 +31,73 @@ Status_t read_config(Config_t *config)
     FILE *file = fopen(CONFIG_NAME, "r");
     if (!file) 
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "Could not open config file", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Could not open config file", strerror(errno));
         return FAILED;
     }
     // Read and process configuration data
     if (fscanf(file, "SERVER_PORT %d\n", &config->server_port) != SUCCESS)
     {
-        syslog_log(LOG_ERR, __func__, "stderr", "Error reading SERVER_PORT from config file");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error reading SERVER_PORT from config file",NULL);
         fclose(file);
         return FAILED;
     }
     if (fscanf(file, "MONTH %d\n", &config->month) != SUCCESS)
     {
-        syslog_log(LOG_ERR, __func__, "stderr", "Error reading MONTH from config file");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error reading MONTH from config file",NULL);
         fclose(file);
         return FAILED;
     }
     if (fscanf(file, "URL %s\n", config->url) != SUCCESS)
     {
-        syslog_log(LOG_ERR, __func__, "stderr", "Error reading URL from config file");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error reading URL from config file",NULL);
         fclose(file);
         return FAILED;
     }
     if (fscanf(file, "URL_NEW_EMPLOYEE %s\n", config->url_new_employee) != SUCCESS)
     {
-        syslog_log(LOG_ERR, __func__, "stderr", "Error reading URL_NEW_EMPLOYEE from config file");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error reading URL_NEW_EMPLOYEE from config file",NULL);
         fclose(file);
         return FAILED;
     }
     if (fscanf(file, "URL_DELETE_EMPLOYEE %s\n", config->url_delete_employee) != SUCCESS)
     {
-        syslog_log(LOG_ERR, __func__, "stderr", "Error reading URL_DELETE_EMPLOYEE from config file");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error reading URL_DELETE_EMPLOYEE from config file",NULL);
         fclose(file);
         return FAILED;
     }
     if (fscanf(file, "URL_CHECK_DELETE %s\n", config->url_check_delete) != SUCCESS)
     {
-        syslog_log(LOG_ERR, __func__, "stderr", "Error reading URL_CHECK_DELETE from config file");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error reading URL_CHECK_DELETE from config file",NULL);
         fclose(file);
         return FAILED;
     }
     if (fscanf(file, "HEADER %[^\n]\n", config->header) != SUCCESS)
     {
-        syslog_log(LOG_ERR, __func__, "stderr", "Error reading HEADER from config file");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error reading HEADER from config file",NULL);
         fclose(file);
         return FAILED;
     }
     if (fscanf(file, "MAX_RETRIES %d\n", &config->max_retries) != SUCCESS)
     {
-        syslog_log(LOG_ERR, __func__, "stderr", "Error reading MAX_RETRIES from config file");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error reading MAX_RETRIES from config file",NULL);
         fclose(file);
         return FAILED;
     }
     if (fscanf(file, "DATABASE_SLEEP_DURATION %d\n", &config->db_sleep) != SUCCESS)
     {
-        syslog_log(LOG_ERR, __func__, "stderr", "Error reading DATABASE_SLEEP_DURATION from config file");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error reading DATABASE_SLEEP_DURATION from config file",NULL);
         fclose(file);
         return FAILED;
     }
     if (fscanf(file, "LCD_MESSAGE \"%[^\"]\"\n", config->lcd_message) != SUCCESS) 
     {
-        syslog_log(LOG_ERR, __func__, "stderr", "Error reading LCD_MESSAGE from config file");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error reading LCD_MESSAGE from config file",NULL);
         fclose(file);
         return FAILED;
     }
     if (fscanf(file, "DATABASE_PATH %s\n", config->database_path) != SUCCESS) 
     {
-        syslog_log(LOG_ERR, __func__, "stderr", "Error reading DATABASE_PATH from config file");
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error reading DATABASE_PATH from config file",NULL);
         fclose(file);
         return FAILED;
     }

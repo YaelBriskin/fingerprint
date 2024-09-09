@@ -32,73 +32,73 @@ extern FILE *file_URL;
  *
  * @param sig The signal number.
  */
-void handle_sigint(int sig) 
+void handle_sigint(int sig)
 {
     int retval;
-    syslog_log(LOG_INFO, __func__, "stderr", "SIGINT signal received");
-    
+    LOG_MESSAGE(LOG_INFO, __func__, "stderr", "SIGINT signal received", NULL);
+
     // Set the stop flag
     stop = 1;
 
     // Signal the condition variables to wake up waiting threads
     pthread_mutex_lock(&displayMutex);
-    if (pthread_cond_signal(&displayCond) != 0) 
+    if (pthread_cond_signal(&displayCond) != 0)
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "Error signaling displayCond", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error signaling displayCond", strerror(errno));
     }
     pthread_mutex_unlock(&displayMutex);
-    
+
     pthread_mutex_lock(&databaseMutex);
-    if (pthread_cond_signal(&databaseCond) != 0) 
+    if (pthread_cond_signal(&databaseCond) != 0)
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "Error signaling databaseCond", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error signaling databaseCond", strerror(errno));
     }
     pthread_mutex_unlock(&databaseMutex);
 
     pthread_mutex_lock(&requestMutex);
-    if (pthread_cond_signal(&requestCond) != 0) 
+    if (pthread_cond_signal(&requestCond) != 0)
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "Error signaling requestCond", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error signaling requestCond", strerror(errno));
     }
     pthread_mutex_unlock(&requestMutex);
 
     // Wait for threads to finish
     retval = pthread_join(thread_datetime, NULL);
-    if (retval != 0) 
+    if (retval != 0)
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "Error joining thread_datetime", strerror(retval));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error joining thread_datetime", strerror(retval));
     }
     retval = pthread_join(thread_database, NULL);
-    if (retval != 0) 
+    if (retval != 0)
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "Error joining thread_database", strerror(retval));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error joining thread_database", strerror(retval));
     }
     retval = pthread_join(thread_deletion, NULL);
-    if (retval != 0) 
+    if (retval != 0)
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "Error joining thread_deletion", strerror(retval));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error joining thread_deletion", strerror(retval));
     }
 
     // Destroy condition variables and mutexes with error checking
-    if (pthread_cond_destroy(&databaseCond) != 0) 
+    if (pthread_cond_destroy(&databaseCond) != 0)
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "Error destroying databaseCond", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error destroying databaseCond", strerror(errno));
     }
-    if (pthread_cond_destroy(&displayCond) != 0) 
+    if (pthread_cond_destroy(&displayCond) != 0)
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "Error destroying displayCond", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error destroying displayCond", strerror(errno));
     }
-    if (pthread_mutex_destroy(&sqlMutex) != 0) 
+    if (pthread_mutex_destroy(&sqlMutex) != 0)
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "Error destroying sqlMutex", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error destroying sqlMutex", strerror(errno));
     }
-    if (pthread_mutex_destroy(&databaseMutex) != 0) 
+    if (pthread_mutex_destroy(&databaseMutex) != 0)
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "Error destroying databaseMutex", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error destroying databaseMutex", strerror(errno));
     }
-    if (pthread_mutex_destroy(&displayMutex) != 0) 
+    if (pthread_mutex_destroy(&displayMutex) != 0)
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "Error destroying displayMutex", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error destroying displayMutex", strerror(errno));
     }
     // Clean up resources
     curl_global_cleanup();
@@ -107,7 +107,7 @@ void handle_sigint(int sig)
     UART_close(uart4_fd);
     I2C_close();
     closeFile(file_URL);
-   
+
     // Close syslog last
     syslog_close();
     // Exit the program
@@ -133,7 +133,7 @@ void setup_sigint_handler()
     // Set up the SIGINT signal handler
     if (sigaction(SIGINT, &sa, NULL) == -1)
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "Error setting up sigaction", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error setting up sigaction", strerror(errno));
         exit(EXIT_FAILURE);
     }
 }

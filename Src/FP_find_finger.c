@@ -48,7 +48,7 @@ int stringToInt(const char *str)
 		else
 		{
 			// Handle invalid characters
-			syslog_log(LOG_ERR, __func__, "format", "Invalid character in string: %c", str[i]);
+			LOG_MESSAGE(LOG_ERR, __func__, "format", "Invalid character in string: %c", str[i]);
 			return 0;
 		}
 		i++;
@@ -88,7 +88,7 @@ int findFinger(const char *message)
 		if (elapsed_time >= max_execution_time)
 		{
 			lcd20x4_i2c_puts(1, 0, "Timeout: One minute has passed.");
-			syslog_log(LOG_ERR, __func__, "stderr", "Timeout: One minute has passed");
+			LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Timeout: One minute has passed", NULL);
 			sleep(SLEEP_LCD);
 			lcd20x4_i2c_clear();
 			return FAILED;
@@ -105,19 +105,19 @@ int findFinger(const char *message)
 			{
 				// checks how the procedure went. FINGERPRINT_OK means good
 			case FINGERPRINT_OK:
-				syslog_log(LOG_INFO, __func__, "OK", "Finger collection success");
+				LOG_MESSAGE(LOG_INFO, __func__, "OK", "Finger collection success", NULL);
 				lcd20x4_i2c_puts(1, 0, "Finger collection success");
 				break;
 			case FINGERPRINT_PACKETRECIEVER:
-				syslog_log(LOG_ERR, __func__, "stderr", "Error when receiving package");
+				LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error when receiving package", NULL);
 				lcd20x4_i2c_puts(1, 0, "Error when receiving package");
 				break;
 			case FINGERPRINT_NOFINGER:
-				syslog_log(LOG_ERR, __func__, "stderr", "Can't detect finger");
+				LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Can't detect finger", NULL);
 				lcd20x4_i2c_puts(1, 0, "Can't detect finger");
 				break;
 			case FINGERPRINT_IMAGEFAIL:
-				syslog_log(LOG_ERR, __func__, "stderr", "Fail to collect finger");
+				LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Fail to collect finger", NULL);
 				lcd20x4_i2c_puts(1, 0, "Fail to collect finger");
 				break;
 			default:;
@@ -136,19 +136,19 @@ int findFinger(const char *message)
 	switch (ack)
 	{
 	case FINGERPRINT_OK:
-		syslog_log(LOG_INFO, __func__, "OK", "Generate character file complete");
+		LOG_MESSAGE(LOG_INFO, __func__, "OK", "Generate character file complete", NULL);
 		break;
 	case FINGERPRINT_PACKETRECIEVER:
-		syslog_log(LOG_ERR, __func__, "stderr", "Error when receiving package");
+		LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error when receiving package", NULL);
 		break;
 	case FINGERPRINT_IMAGEMESS:
-		syslog_log(LOG_ERR, __func__, "stderr", "Fail to generate character file due to the over-disorderly fingerprint image");
+		LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Fail to generate character file due to the over-disorderly fingerprint image", NULL);
 		break;
 	case FINGERPRINT_FEATUREFAIL:
-		syslog_log(LOG_ERR, __func__, "stderr", "Fail to generate character file due to lackness of character point or over-smallness of fingerprint image");
+		LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Fail to generate character file due to lackness of character point or over-smallness of fingerprint image", NULL);
 		break;
 	case FINGERPRINT_INVALIDIMAGE:
-		syslog_log(LOG_ERR, __func__, "stderr", "Fail to generate the image for the lackness of valid primary image");
+		LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Fail to generate the image for the lackness of valid primary image", NULL);
 		break;
 	default:;
 	}
@@ -165,11 +165,11 @@ int findFinger(const char *message)
 		sprintf(num, "%d", (fingerID[1] | (fingerID[0] << 8)));
 		sprintf(mydata, "%s ID #%s", message, num);
 		lcd20x4_i2c_puts(1, 0, mydata);
-		syslog_log(LOG_INFO, __func__, "OK", " ", mydata);
+		LOG_MESSAGE(LOG_INFO, __func__, "OK", " ", mydata);
 		return stringToInt(num); // Return fingerprint ID
 	case FINGERPRINT_PACKETRECIEVER:
 		lcd20x4_i2c_puts(1, 0, "Error when receiving package");
-		syslog_log(LOG_ERR, __func__, "stderr", "Error when receiving package");
+		LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error when receiving package", NULL);
 		break;
 	case FINGERPRINT_NOTFOUND:
 		return ERROR;

@@ -21,7 +21,7 @@ Status_t GPIO_init(int pinNumber, const char* direction)
         int export_fd = open("/sys/class/gpio/export", O_WRONLY);
         if (export_fd == ERROR) 
         {
-            syslog_log(LOG_ERR, __func__, "strerror", "Error opening GPIO export", strerror(errno));
+            LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error opening GPIO export", strerror(errno));
             return FAILED;
         }
 
@@ -37,7 +37,7 @@ Status_t GPIO_init(int pinNumber, const char* direction)
     int gpio_fd = open(direction_path, O_WRONLY);
     if (gpio_fd == ERROR) 
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "Error opening GPIO direction", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error opening GPIO direction", strerror(errno));
         return FAILED;
     }
 
@@ -61,7 +61,7 @@ int GPIO_read(int gpio_fd)
     char value;
     if (read(gpio_fd, &value, sizeof(value)) == ERROR)
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "Error reading GPIO value", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error reading GPIO value", strerror(errno));
         close(gpio_fd);
         exit(EXIT_FAILURE);
     }
@@ -81,7 +81,7 @@ void GPIO_write(int gpio_fd, int value)
     char val_str = (value == 1) ? '1' : '0';
     if (write(gpio_fd, &val_str, 1) == ERROR) 
     {
-        syslog_log(LOG_ERR, __func__, "Error writing GPIO value", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__,  "strerror" ,"Error writing GPIO value", strerror(errno));
         //exit(EXIT_FAILURE);
     }
 }
@@ -101,7 +101,7 @@ int GPIO_open(int pinNumber, int flag)
     int fd = open(gpioPath, flag);
     if (fd == ERROR) 
     {
-        syslog_log(LOG_ERR, __func__, "strerror", "Error opening GPIO value file", strerror(errno));
+        LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Error opening GPIO value file", strerror(errno));
         exit(EXIT_FAILURE);
     }
     return fd;
