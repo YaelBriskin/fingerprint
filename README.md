@@ -4,22 +4,54 @@
 
 This project represents a fingerprint-based access control system. It uses fingerprint sensors, GPIO for managing buttons and LEDs, and interacts with a database and external services via cURL.
 
+## Configuring Your Computer's Network for Communication with BeagleBone
+
+1. **Check Current Network Interfaces:**
+```bash
+ifconfig
+```
+This command will display the network interfaces and their current configurations.
+
+2. **Set Up Network Parameters:** To configure a network interface (e.g., `eth0`), use the following command, replacing `192.168.7.2` with the IP address you want to assign to your computer, and `255.255.255.0` with the appropriate subnet mask:
+```bash
+sudo ifconfig eth0 192.168.7.2 netmask 255.255.255.0 up
+```
+Make sure to use the correct network interface name (`eth0`, `enp0s3`, etc.) based on your system's configuration.
+
+3. **Set Up the Default Route:** To ensure that your computer knows how to reach the BeagleBone, you might need to add a route. Assuming the BeagleBone has an IP address of `192.168.7.1` and you're using `eth0`, you can set the route like this:
+```bash
+sudo route add default gw 192.168.7.1 eth0
+```
+4. **Verify the Route Configuration:** Check the current routing table to ensure that the route has been added correctly:
+
+```bash
+route -n
+```
+This will display the routing table with network destinations, gateways, and other details.
+
+5. **Verify Network Connectivity:** Once the configuration is done, you can test the connection to the BeagleBone using ping. Replace `192.168.7.1` with the IP address of the BeagleBone:
+
+```bash
+ping 192.168.7.1
+```
+If the BeagleBone responds to the `ping` request, the network setup is successful.
+
 ## Adding Peripherals via Overlay on BeagleBone
 
-1.**Navigate to the firmware directory**:
+1.**Navigate to the firmware directory:**
 ```bash
 cd /lib/firmware/
 ```
-2.**List available overlay files for UART and I2C**:
+2.**List available overlay files for UART and I2C:**
 ```bash
 ls *UART* *I2C*
 ```
-3.**Select the desired overlay files and open the** *uEnv.txt* **file for editing**:
+3.**Select the desired overlay files and open the `uEnv.txt` file for editing:**
 ```bash
 cd /boot/
 sudo nano uEnv.txt
 ```
-4.**Add the necessary overlay files to** *uEnv.txt*. **Example**:
+4.**Add the necessary overlay files to`uEnv.txt`. Example:**
 ```bash
 # Add required overlay files
 uboot_overlay_addr0=/lib/firmware/BB-UART2-00A0.dtbo
@@ -28,7 +60,7 @@ uboot_overlay_addr2=/lib/firmware/BB-UART4-00A0.dtbo
 ```
 5.**Save the changes and close the editor.**
 
-6.**Verify the connected peripherals**:
+6.**Verify the connected peripherals:**
 ```bash
 cat /sys/kernel/debug/pinctrl/44e10800.pinmux-pinctrl-single/pingroups
 ```
@@ -74,7 +106,7 @@ make clean
 ```
 **Running the Project**
 
-After compilation, the executable will be located in *./build/out/.* You can run it with:
+After compilation, the executable will be located in `./build/out/.` You can run it with:
 
 ```bash
 ./build/out/fingerprint
@@ -201,7 +233,7 @@ When pressing the buttons, the system will:
 
 To run the project as a background service (daemon) in Linux, follow the steps below:
 
-- **Copy the executable** to */bin* so it can be executed from anywhere:
+- **Copy the executable** to `/bin` so it can be executed from anywhere:
 ```bash
 cp fingerprint /bin
 ```
