@@ -515,7 +515,13 @@ int DB_find_ID(int id_to_check)
     int result = 0;
 
     char *sql_query = NULL;
-    asprintf(&sql_query, "SELECT ID FROM attendance WHERE Saved = 'X' AND ID = %d;", id_to_check);
+    // Allocate memory for the query
+    if (asprintf(&sql_query, "SELECT ID FROM attendance WHERE Saved = 'X' AND ID = %d;", id_to_check) == -1)
+    {
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Failed to allocate memory for SQL query", NULL);
+        pthread_mutex_unlock(&sqlMutex);
+        return ERROR;
+    }
 
     // Prepare the request
     if (sqlite3_prepare_v2(db_attendance, sql_query, -1, &stmt, NULL) != SQLITE_OK)
@@ -537,6 +543,8 @@ int DB_find_ID(int id_to_check)
         sqlite3_finalize(stmt);
     }
 
+    // Free the memory allocated for the query
+    free(sql_query);
     pthread_mutex_unlock(&sqlMutex);
     return result;
 }

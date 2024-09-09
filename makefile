@@ -36,7 +36,6 @@ dirCreation:
 # Compiling the main program
 $(PROGRAM_MAIN): $(ALL_OBJECTS) | print_end 
 	$(CC) $(PROGRAM_MAIN) $(BUILD_FLAGS) $^ $(COMMON_FLAGS) -o $(OUT_DIR)/fingerprint
-	@echo "Build complete."
 
 # Including source file directories
 vpath %.$(FE) $(sort $(dir $(ALL_SOURCES)))
@@ -67,5 +66,7 @@ git:
 # To build in debug mode, call `make debug`
 debug:
 	$(MAKE) all BUILD_FLAGS="$(DEBUG_FLAGS)"
+	@echo "Build complete. Mode: Debug"
 release:
 	$(MAKE) all BUILD_FLAGS="$(RELEASE_FLAGS)"
+	@echo "Build complete. Mode: Release"

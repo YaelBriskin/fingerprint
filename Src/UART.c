@@ -68,7 +68,7 @@ void UART_write(int uart_fd, const char *data, int size)
             // Log partial writes
             char log_message[MAX_LOG_MESSAGE_LENGTH];
             snprintf(log_message, MAX_LOG_MESSAGE_LENGTH, "Error: Only %d out of %d bytes were written!", ret, size);
-            LOG_MESSAGE(LOG_ERR, __func__, "strerr", log_message, NULL);
+            LOG_MESSAGE(LOG_ERR, __func__, "stderr", log_message, NULL);
         }
         retries_UART_write++;
         usleep(DELAY);
@@ -77,7 +77,7 @@ void UART_write(int uart_fd, const char *data, int size)
     if (retries_UART_write == g_max_retries)
     {
         // Log the error if maximum retries are reached
-        LOG_MESSAGE(LOG_ERR, __func__, "strerr", "Error: Maximum retries reached", NULL);
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error: Maximum retries reached", NULL);
     }
 }
 
@@ -102,7 +102,7 @@ Status_t UART_read(int uart_fd, char *buffer, int size)
         else if (bytes_read == 0)
         {
             // Log a message if the UART input buffer is empty
-            LOG_MESSAGE(LOG_ERR, __func__, "strerr", "UART input buffer is empty.", NULL);
+            LOG_MESSAGE(LOG_ERR, __func__, "stderr", "UART input buffer is empty.", NULL);
             break;
         }
         else
@@ -116,7 +116,7 @@ Status_t UART_read(int uart_fd, char *buffer, int size)
     if (retries_UART_read == g_max_retries)
     {
         // Log and print an error if maximum retries are reached
-        LOG_MESSAGE(LOG_ERR, __func__, "strerr", "Error: Maximum retries reached", NULL);
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error: Maximum retries reached", NULL);
         return FAILED;
     }
     return FAILED;

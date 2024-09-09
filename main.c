@@ -143,7 +143,7 @@ Status_t init()
   // Initialize LCD
   if (!lcd20x4_i2c_init())
   {
-    LOG_MESSAGE(LOG_ERR, __func__, "strerr", "LCD initialization failed!", NULL);
+    LOG_MESSAGE(LOG_ERR, __func__, "stderr", "LCD initialization failed!", NULL);
     cleanup_resources();
     return FAILED;
   }
@@ -219,6 +219,7 @@ void fingerPrint()
     else if (id == -1)
     {
       lcd20x4_i2c_puts(1, 0, "No matching in the library"); // show on LCD
+      LOG_MESSAGE(LOG_DEBUG, __func__, "stderr", "No matching in the library", NULL);
       sleep(SLEEP_LCD);                                     // Wait before clearing the display
     }
     else
@@ -233,19 +234,22 @@ void fingerPrint()
           char mydata[23] = {0};
           sprintf(mydata, "Hello  ID #%d", id);
           lcd20x4_i2c_puts(1, 0, mydata); // show on LCD
+          LOG_MESSAGE(LOG_DEBUG, __func__, "stderr", mydata, NULL);
           buzzer();                       // Activate the buzzer for successful entry
         }
         else
         {
           lcd20x4_i2c_puts(1, 0, "Failed to write to database"); // show on LCD
+          LOG_MESSAGE(LOG_DEBUG, __func__, "stderr", "Failed to write to database", NULL);
         }
         sleep(SLEEP_LCD);
       }
-      else if (result == 0)
+      else if (result == 0 && id!= CANCEL)
       {
         char mydata[23] = {0};
         sprintf(mydata, "The entered ID  #%d does not exist", id);
         lcd20x4_i2c_puts(0, 0, mydata);
+        LOG_MESSAGE(LOG_DEBUG, __func__, "stderr", mydata, NULL);
         sleep(SLEEP_LCD);
       }
     }
@@ -287,6 +291,7 @@ void fingerPrint()
     else if (id == -1)
     {
       lcd20x4_i2c_puts(1, 0, "No matching in the library"); // show on LCD
+      LOG_MESSAGE(LOG_DEBUG, __func__, "stderr", "No matching in the library", NULL);
       sleep(SLEEP_LCD);
     }
     else
@@ -300,21 +305,25 @@ void fingerPrint()
           char mydata[23] = {0};
           sprintf(mydata, "Goodbye  ID #%d", id);
           lcd20x4_i2c_puts(1, 0, mydata); // show on LCD
+          LOG_MESSAGE(LOG_DEBUG, __func__, "OK", mydata, NULL);
           buzzer();                       // turn on the buzzer
         }
         else
         {
           lcd20x4_i2c_puts(1, 0, "Failed to write to database"); // show on LCD
+          LOG_MESSAGE(LOG_DEBUG, __func__, "stderr", "Failed to write to database", NULL);
         }
         sleep(SLEEP_LCD);
       }
-      else if (result == 0)
+      else if (result == 0 && id!= CANCEL)
       {
         char mydata[23] = {0};
         sprintf(mydata, "The entered ID  #%d does not exist", id);
         lcd20x4_i2c_puts(0, 0, mydata);
+        LOG_MESSAGE(LOG_DEBUG, __func__, "OK", mydata, NULL);
         sleep(SLEEP_LCD);
       }
+      
     }
     displayLocked = UNLOCK;
     // Send a signal to finish working with the display
@@ -346,6 +355,7 @@ void fingerPrint()
       char messageString[MESSAGE_LEN];
       sprintf(messageString, "Employee %d added successfully.", id);
       lcd20x4_i2c_puts(0, 0, messageString);  // show on LCD
+      LOG_MESSAGE(LOG_DEBUG, __func__, "OK", messageString, NULL);
       buzzer();                               // turn on the buzzer
       timestamp = getCurrent_UTC_Timestamp(); // get current date and time in UTC format
       // send to the CRM ID of a new employee
@@ -365,6 +375,7 @@ void fingerPrint()
         deleteModel(id);
         DB_delete(id);
         lcd20x4_i2c_puts(0, 0, " Connection error. The new employee ID were not saved"); // show on LCD
+        LOG_MESSAGE(LOG_DEBUG, __func__, "stderr", "Connection error. The new employee ID were not saved", NULL);
       }
       sleep(SLEEP_LCD);
     }
@@ -373,6 +384,7 @@ void fingerPrint()
       // If enrolling fails, remove the entry from the database
       LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Enrolling failed.",NULL);
       lcd20x4_i2c_puts(1, 0, "Enrolling failed."); // show on LCD
+      LOG_MESSAGE(LOG_DEBUG, __func__, "stderr", "Enrolling failed.", NULL);
     }
 
     displayLocked = UNLOCK;
@@ -403,7 +415,6 @@ void fingerPrint()
 int main()
 {
   Config_t config;
-
   // syslog initialization
   syslog_init();
   // signal to kill programm (Ctrl+C)
@@ -452,7 +463,7 @@ int main()
     LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Could not initialize cURL", strerror(errno));
     return EXIT_FAILURE;
   }
-  // emptyDatabase(); //do this to empty database in FPM
+  emptyDatabase(); //do this to empty database in FPM
 
   // create or open database
   DB_open();

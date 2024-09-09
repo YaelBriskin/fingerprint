@@ -40,12 +40,12 @@ void I2C_write(uint8_t *buffer, int size)
         // Attempt to write the data to the I2C bus
         if (write(i2c_fd, buffer, size) == size)
             break;
-        LOG_MESSAGE(LOG_ERR, __func__, "strerr", "Failed to write to I2C bus", NULL);
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Failed to write to I2C bus", NULL);
         retries_I2C_transmit++;
     } while (retries_I2C_transmit < g_max_retries);
 
     if (retries_I2C_transmit == g_max_retries)
-        LOG_MESSAGE(LOG_ERR, __func__, "strerr", "Error: Maximum retries reached", NULL);
+        LOG_MESSAGE(LOG_ERR, __func__, "stderr", "Error: Maximum retries reached", NULL);
 }
 
 /**

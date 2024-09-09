@@ -3,10 +3,14 @@
 
 #ifdef DEBUG
     #define LOG_MESSAGE(log_level, func_name, message_type, custom_message, sys_message) \
-        printf("Debug [%s] in %s: %s\n", log_level, func_name, custom_message)
+        printf("\033[1;32m%s\033[0m: %s\n", func_name, custom_message)
 #else
     #define LOG_MESSAGE(log_level, func_name, message_type, custom_message, sys_message) \
-        syslog_log(log_level, func_name, message_type, custom_message, sys_message)
+        do { \
+            if (log_level != LOG_DEBUG) { \
+                syslog_log(log_level, func_name, message_type, custom_message, sys_message); \
+            } \
+        } while (0)
 #endif
 
 #define CANCEL 0
@@ -28,7 +32,7 @@
 #define SLEEP_DURATION 4
 #define ONE_MINUTE 60 
 #define MONTH 2
-#define CHECK_INTERVAL 20//(24 * 60 * 60) // 24 hours in seconds
+#define CHECK_INTERVAL (24 * 60 * 60) // 24 hours in seconds
 #define MAX_FILE_SIZE 10485760 // 10 MB
 
 #define TRUE "true"

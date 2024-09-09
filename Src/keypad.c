@@ -53,6 +53,7 @@ int enter_ID_keypad()
         if (elapsed_time >= max_execution_time) 
         {
             lcd20x4_i2c_puts(1, 0,"Timeout: One minute has passed.");
+            LOG_MESSAGE(LOG_DEBUG, __func__, "stderr", "Timeout: One minute has passed.", NULL);
             sleep(SLEEP_DURATION);
             lcd20x4_i2c_clear();
             return ERROR;
@@ -71,6 +72,7 @@ int enter_ID_keypad()
                     digit_count++;
                     // Update LCD display
                     lcd20x4_i2c_print(1, 9, code);
+                    LOG_MESSAGE(LOG_DEBUG, __func__, "OK", code, NULL);
                 }
                 else if (character == '*')
                 {
@@ -79,12 +81,15 @@ int enter_ID_keypad()
                         code[--digit_count] = '_';
                         // Update LCD display
                         lcd20x4_i2c_print(1, 9, code);
+                        LOG_MESSAGE(LOG_DEBUG, __func__, "OK", code, NULL);
                     }
                     else
                     {
                         lcd20x4_i2c_clear();
                         lcd20x4_i2c_puts(1, 0, "cancel the operation?");
                         lcd20x4_i2c_puts(2, 0, "* yes   # no");
+                        LOG_MESSAGE(LOG_DEBUG, __func__, "stderr", "cancel the operation? * yes   # no", NULL);
+
                         while (1)
                         {
                             if (UART_read(uart4_fd, &rx_buffer, 1) == SUCCESS)
@@ -120,6 +125,7 @@ int enter_ID_keypad()
                     else
                     {
                         lcd20x4_i2c_puts(0, 0, "Invalid ID length. Please enter the code again.");
+                        LOG_MESSAGE(LOG_DEBUG, __func__, "stderr", "Invalid ID length. Please enter the code again.", NULL);
                         attempts++;
                         beginDisplay();
                     }
