@@ -18,27 +18,33 @@ To install dependencies on Debian/Ubuntu:
 sudo apt-get install -y libgpiod-dev sqlite3 libcurl4-openssl-dev libcjson-dev
 ```
 ## Project Compilation
+
 The project uses a Makefile for compilation. It supports two build modes:
 
 - **Debug**: Includes debugging information and logs output using printf.
 - **Release**: Logs messages using syslog with LOG_ERR level.
 
 **Compiling in Debug Mode**
+
 ```bash
 make debug
 ```
 **Compiling in Release Mode**
+
 ```bash
 make release
 ```
 
 **Cleaning the Build**
+
 To clean up all built files:
 ```bash
 make clean
 ```
 **Running the Project**
+
 After compilation, the executable will be located in *./build/out/.* You can run it with:
+
 ```bash
 ./build/out/fingerprint
 ```
@@ -159,6 +165,64 @@ When pressing the buttons, the system will:
 
 5. **Error Indication**:
    - If there is a connection error (e.g., during new employee registration), the red LED will turn on to indicate a failure.
+
+### Setting Up as a Daemon
+
+To run the project as a background service (daemon) in Linux, follow the steps below:
+
+- **Copy the executable** to */bin* so it can be executed from anywhere:
+```bash
+cp fingerprint /bin
+```
+- **Create a systemd service file**:
+```bash
+sudo nano /etc/systemd/system/fingerprint.service
+```
+- **Edit the service file** to look like this:
+```ini
+[Unit]
+Description=Fingerprint Management System
+After=network.target
+
+[Service]
+ExecStart=/bin/fingerprint
+Restart=always
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
+```
+- **Reload systemd** to apply changes:
+```bash
+sudo systemctl daemon-reload
+```
+- **Start the service**:
+```bash
+sudo systemctl start fingerprint
+```
+- **Enable the service** to start automatically at boot:
+```bash 
+sudo systemctl enable fingerprint
+```
+- **Check the status** of the service:
+```bash
+sudo systemctl status fingerprint
+```
+### Managing the Daemon
+
+- **Stop the service**:
+```bash
+sudo systemctl stop fingerprint
+```
+- **Reload systemd** after making changes:
+```bash
+sudo systemctl daemon-reload
+```
+- **Reboot the system** to test the service startup:
+```bash
+sudo reboot
+```
 
 ### Debugging and Logging
 
