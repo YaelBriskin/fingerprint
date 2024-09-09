@@ -1,7 +1,7 @@
 #sudo apt-get install -y libgpiod-dev
 #ipcrm -m 
 #ipcrm -m 10
-
+.DEFAULT_GOAL := release 
 # the compiler: gcc for C program or g++ for C++ program
 CC = gcc
 #File Extension by .c for C program or .cpp for C++ program
