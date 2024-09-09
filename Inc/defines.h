@@ -13,6 +13,7 @@
         } while (0)
 #endif
 
+#define SEQ_LENGTH 2
 #define CANCEL 0
 #define ERROR -1
 #define MUTEX_OK 0

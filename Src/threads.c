@@ -165,8 +165,9 @@ void *clockThread(void *arg)
             }
         }
         // Updates the display with the current time.
-        lcd20x4_i2c_puts(0, 0, timeString);
-        lcd20x4_i2c_puts(2, 0, g_lcd_message);
+        lcd20x4_i2c_puts(0, 3, timeString);
+        lcd20x4_i2c_puts(1, 3, g_lcd_message);
+        lcd20x4_i2c_puts(3, 1, "1-Entry     3-Exit");
         // Wait for one minute before updating the display again
         clock_gettime(CLOCK_REALTIME, &timeout);
         timeout.tv_sec += ONE_MINUTE;

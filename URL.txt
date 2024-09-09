@@ -324,3 +324,23 @@ Error in send_post_request: HTTP request failed with response code: 404{"status"
 Error in send_post_request: HTTP request failed with response code: 404
 Error in process_response: No IDs to delete in the response{"status":404,"message":"No user with the following data was found: fingerprint_id 1, device_id 1 (\"Nahalat Yitzhak\")"}
 Error in send_post_request: HTTP request failed with response code: 404
+Error in process_response: No IDs to delete in the response{"status":404,"message":"No user with the following data was found: fingerprint_id 1, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404{"status":404,"message":"No user with the following data was found: fingerprint_id 1, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404{"status":404,"message":"No user with the following data was found: fingerprint_id 1, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404{"status":404,"message":"No user with the following data was found: fingerprint_id 1, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404
+Error in process_response: No IDs to delete in the response{"status":404,"message":"No user with the following data was found: fingerprint_id 1, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404
+Error in process_response: No IDs to delete in the response{"status":404,"message":"No user with the following data was found: fingerprint_id 1, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404{"status":404,"message":"No user with the following data was found: fingerprint_id 1, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404{"status":404,"message":"No user with the following data was found: fingerprint_id 1, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404
+Error in process_response: No IDs to delete in the response{"status":404,"message":"No user with the following data was found: fingerprint_id 1, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404
+Error in process_response: No IDs to delete in the response{"status":404,"message":"No user with the following data was found: fingerprint_id 1, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404{"status":404,"message":"No user with the following data was found: fingerprint_id 1, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404{"status":404,"message":"No user with the following data was found: fingerprint_id 1, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404
+Error in process_response: No IDs to delete in the response{"status":404,"message":"No user with the following data was found: fingerprint_id 1, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404{"status":404,"message":"No user with the following data was found: fingerprint_id 1, device_id 1 (\"Nahalat Yitzhak\")"}
+Error in send_post_request: HTTP request failed with response code: 404
