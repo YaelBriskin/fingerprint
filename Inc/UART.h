@@ -14,10 +14,10 @@
 #include "defines.h"
 #include "config.h"
 
-#define UART4_DEVICE "/dev/ttyS4"
-#define UART2_DEVICE "/dev/ttyS2"
-#define UART2_BaudRate B57600
-#define UART4_BaudRate B9600
+#define FPM_DEVICE   "/dev/ttyS4"
+#define KEYBOARD     "/dev/ttyS2"
+#define FPM_BaudRate      B57600
+#define KEYBOARD_BaudRate      B9600
 
 int UART_Init(const char* device, speed_t UART_BaudRate);
 void UART_write(int uart_fd,const char* data, int size);

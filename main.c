@@ -19,7 +19,7 @@
 #include "./Inc/syslog_util.h"
 #include "./Inc/signal_handlers.h"
 
-int uart2_fd, uart4_fd;
+int keybord_fd, fpm_fd;
 // Flag to stop threads
 volatile sig_atomic_t stop = 0;
 
@@ -38,8 +38,8 @@ bool gpio_button_new_initialized = false;
 bool gpio_buzzer_initialized = false;
 bool gpio_led_red_initialized = false;
 bool lcd_initialized = false;
-bool uart2_initialized = false;
-bool uart4_initialized = false;
+bool keyboard_initialized = false;
+bool fpm_initialized = false;
 
 char inputSequence[SEQ_LENGTH] = {0}; // Buffer size is 2
 int seqIndex = 0;
@@ -120,13 +120,13 @@ void cleanup_resources()
     I2C_close();
   }
   // Clean up UARTs
-  if (uart2_initialized)
+  if (keyboard_initialized)
   {
-    close(uart2_fd);
+    close(keybord_fd);
   }
-  if (uart4_initialized)
+  if (fpm_initialized)
   {
-    close(uart4_fd);
+    close(fpm_fd);
   }
 }
 
@@ -193,23 +193,23 @@ Status_t init()
   lcd_initialized = true;
 
   // Initialize UARTs
-  uart2_fd = UART_Init(UART2_DEVICE, UART2_BaudRate);
-  if (uart2_fd < 1)
+  keybord_fd = UART_Init(KEYBOARD, KEYBOARD_BaudRate);
+  if (keybord_fd < 1)
   {
-    LOG_MESSAGE(LOG_ERR, __func__, "strerror", "UART2 initialization failed", strerror(errno));
+    LOG_MESSAGE(LOG_ERR, __func__, "strerror", "keyboard initialization failed", strerror(errno));
     cleanup_resources();
     return FAILED;
   }
-  uart2_initialized = true;
+  keyboard_initialized = true;
 
-  uart4_fd = UART_Init(UART4_DEVICE, UART4_BaudRate);
-  if (uart4_fd < 1)
+  fpm_fd = UART_Init(FPM_DEVICE, FPM_BaudRate);
+  if (fpm_fd < 1)
   {
-    LOG_MESSAGE(LOG_ERR, __func__, "strerror", "UART4 initialization failed", strerror(errno));
+    LOG_MESSAGE(LOG_ERR, __func__, "strerror", "FPM initialization failed", strerror(errno));
     cleanup_resources();
     return FAILED;
   }
-  uart4_initialized = true;
+  fpm_initialized = true;
 
   return SUCCESS;
 }
@@ -230,7 +230,7 @@ void fingerPrint()
   char input;
   int id;
   // Read from UART to get the pressed key
-  if (UART_read(uart4_fd, &rx_buffer, 1) == SUCCESS)
+  if (UART_read(keybord_fd, &rx_buffer, 1) == SUCCESS)
   {
     input = convert_to_char(rx_buffer); // Convert UART value to character
   }
@@ -455,10 +455,6 @@ void fingerPrint()
     break;
 
   default:
-    // Handle any invalid inputs
-    lcd20x4_i2c_puts(1, 0, "Invalid Input");
-    LOG_MESSAGE(LOG_DEBUG, __func__, "stderr", "Invalid Input", NULL);
-    sleep(SLEEP_LCD); // Wait before clearing the display
     break;
   }
   // Delay to debounce button presses
@@ -520,7 +516,7 @@ int main()
     LOG_MESSAGE(LOG_ERR, __func__, "strerror", "Could not initialize cURL", strerror(errno));
     return EXIT_FAILURE;
   }
-  emptyDatabase(); // do this to empty database in FPM
+  //emptyDatabase(); // do this to empty database in FPM
 
   // create or open database
   DB_open();

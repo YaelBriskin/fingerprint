@@ -14,7 +14,7 @@
 
 void DB_open();
 void DB_newEmployee();
-Status_t DB_write(int ID, int Timestamp, const char *direction,const char *FPM);
+Status_t DB_write(int ID, int Timestamp, const char *direction,const char *fpm);
 void DB_close();
 int DB_find();
 void DB_update(int id);

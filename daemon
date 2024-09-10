@@ -2,6 +2,7 @@ to create daemon in Linux to .exe file
 
 fingerprint this name of my .exe file
 ~~~~~~~~~~~~~~~~~~~~~~
+cd build/out/
 cp fingerprint /bin
 
 sudo nano /etc/systemd/system/fingerprint.service

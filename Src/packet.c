@@ -11,7 +11,7 @@ protocol[][][]...
 
  */
 ReadSysPara parameters;
-extern int uart2_fd;
+extern int fpm_fd;
 /// Соответствующее местоположение, которое установлено fingerFastSearch ()
 uint8_t fingerID[2];
 /// Достоверность соответствия fingerFastSearch (), более высокие числа - больше уверенности
@@ -315,7 +315,7 @@ void SendToUart(fingerprintPacket *packet)
 	}
 	packetData[i++] = (uint8_t)(Sum >> 8);
 	packetData[i] = (uint8_t)(Sum & 0xFF);
-	UART_write(uart2_fd, packetData, Size);
+	UART_write(fpm_fd, packetData, Size);
 }
 /**************************************************************************/
 /*!
@@ -334,7 +334,7 @@ uint8_t GetFromUart(fingerprintPacket *packet)
 	SendToUart(packet);
 	usleep(DELAY);
 	// Check the first data read
-	if (UART_read(uart2_fd, pData, MIN_SIZE_PACKET) == FAILED)
+	if (UART_read(fpm_fd, pData, MIN_SIZE_PACKET) == FAILED)
 	{
 		return FINGERPRINT_TIMEOUT;
 	}
@@ -346,7 +346,7 @@ uint8_t GetFromUart(fingerprintPacket *packet)
 		return -1;
 	}
 	// Check the second data read
-	if (UART_read(uart2_fd, pData + MIN_SIZE_PACKET, length) == FAILED)
+	if (UART_read(fpm_fd, pData + MIN_SIZE_PACKET, length) == FAILED)
 	{
 		return FINGERPRINT_TIMEOUT;
 	}

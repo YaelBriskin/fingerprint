@@ -69,6 +69,7 @@ bool lcd20x4_i2c_init()
   //usleep(3000);
   usleep(1000);
 
+  lcd20x4_i2c_clear();
   return true;
 }
 

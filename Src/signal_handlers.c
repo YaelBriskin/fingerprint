@@ -16,7 +16,7 @@ extern pthread_mutex_t requestMutex;
 extern pthread_mutex_t sqlMutex;
 
 extern volatile sig_atomic_t stop;
-extern int uart2_fd, uart4_fd;
+extern int keybord_fd, fpm_fd;
 // External declarations of file
 extern FILE *file_global;
 extern FILE *file_URL;
@@ -103,8 +103,8 @@ void handle_sigint(int sig)
     // Clean up resources
     curl_global_cleanup();
     DB_close();
-    UART_close(uart2_fd);
-    UART_close(uart4_fd);
+    UART_close(keybord_fd);
+    UART_close(fpm_fd);
     I2C_close();
     closeFile(file_URL);
 

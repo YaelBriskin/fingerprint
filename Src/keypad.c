@@ -1,6 +1,6 @@
 #include "../Inc/keypad.h"
 
-extern int uart4_fd;
+extern int keybord_fd;
 
 // Define the buffer for the entered ID
 char code[MAX_LENGTH_ID + 1] = {'_', '_', '_', '\0'};
@@ -59,7 +59,7 @@ int enter_ID_keypad()
             return ERROR;
         }
         // Read from UART
-        if(UART_read(uart4_fd, &rx_buffer, 1) == SUCCESS)
+        if(UART_read(keybord_fd, &rx_buffer, 1) == SUCCESS)
         {
             char character = convert_to_char(rx_buffer);
             // Handle character input
@@ -92,7 +92,7 @@ int enter_ID_keypad()
 
                         while (1)
                         {
-                            if (UART_read(uart4_fd, &rx_buffer, 1) == SUCCESS)
+                            if (UART_read(keybord_fd, &rx_buffer, 1) == SUCCESS)
                             {
                                 character = convert_to_char(rx_buffer);
                                 if (character == '*') // Пользователь выбрал "Да"
