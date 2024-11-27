@@ -17,8 +17,10 @@
 #include "defines.h"
 #include "config.h"
 
-#define I2C_BUS "/dev/i2c-2" 
+#define I2C_BUS "/dev/i2c-1" 
 #define I2C_ADDRESS 0x27 
+// I2C_SDA  GPIO 2  pin 3
+// I2C_SCL  GPIO 3  pin 5
 
 Status_t I2C_Init();
 void I2C_write(uint8_t *buffer, int size);

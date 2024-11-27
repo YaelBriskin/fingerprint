@@ -14,8 +14,10 @@
 #include "defines.h"
 #include "config.h"
 
-#define FPM_DEVICE   "/dev/ttyS2"
+#define FPM_DEVICE   "/dev/ttyS0"
 #define FPM_BaudRate      B57600
+// UART_TX GPIO 14 pin 8
+// UART_RX GPIO 15 pin 10
 
 int UART_Init(const char* device, speed_t UART_BaudRate);
 void UART_write(int uart_fd,const char* data, int size);
